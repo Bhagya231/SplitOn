@@ -55,3 +55,68 @@ export function validateExpense(formData)
 
     return errors;
 }
+
+
+export function validateRegisterForm(formData)
+{
+
+     const validEmail =  /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const  validPhone  = /^[6-9]\d{9}$/;
+    const errors = {};
+
+     
+    if (!formData.name.trim()) 
+    {
+        errors.name = "Full name is required.";
+    } else if (formData.name.trim().length < 3) 
+    {
+        errors.name = "Name must contain at least 3 characters.";
+    }
+
+
+   
+    if (!formData.email.trim()) 
+    {
+        errors.email = "Email is required.";
+
+    } else if ( !validEmail.test(formData.email))
+    {
+        errors.email = "Please enter a valid email address.";
+    }
+
+
+    
+   
+    if (!formData.phone.trim()) 
+    {
+        errors.phone = "Phone number is required.";
+    } else if (!validPhone.test(formData.phone))
+    {
+        errors.phone = "Please enter a valid 10-digit phone number.";
+    }
+
+
+   
+    if (!formData.password)
+    {
+        errors.password = "Password is required.";
+    } else if (formData.password.length < 8) {
+        errors.password = "Password must contain at least 8 characters.";
+    }
+
+    
+    if (!formData.confirmPassword)
+    {
+        errors.confirmPassword = "Please confirm your password.";
+    } else if (formData.password !== formData.confirmPassword) {
+        errors.confirmPassword = "Passwords do not match.";
+    }
+
+
+    return errors;
+
+
+}
+
+
+

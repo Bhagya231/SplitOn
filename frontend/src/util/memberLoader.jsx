@@ -10,11 +10,13 @@ export async function MemberLoader() {
         members: response.data,
         expenses: res.data,
     }
-  } catch (error) {
+  } catch (error)
+   {
     if (error.response) {
-      throw new Response(error.response.data?.message || "Failed to load balances", { status: error.response.status || 500 });
+        throw new Response( error.response.data?.message || "Failed to load members and expenses",
+            {status: error.response.status || 500});
     }
 
-   
-  }
+    throw new Response("Unable to connect to the server. Please try again.",  {status: 500});
+}
 }

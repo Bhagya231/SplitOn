@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import FormInput from "../components/common/FormInput";
 import Button from "./common/Button";
 
@@ -9,6 +9,16 @@ function AddMember({  onAddMember })
     const [successMessage, setSuccessMessage] = useState("");
     const [submitting, setSubmitting] = useState(false);      
     
+
+    useEffect(() => {
+        if (!successMessage) return;
+
+        const timer = setTimeout(() => {
+            setSuccessMessage("");
+        }, 3000);
+
+        return () => clearTimeout(timer);
+        }, [successMessage]);
 
     function handleChange(event) 
     {

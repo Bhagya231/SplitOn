@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 @NullMarked
@@ -38,4 +39,7 @@ public class CustomUserDetails implements UserDetails
         return members.getPassword();
     }
 
+    public UUID getUserId() {
+        return members.getId();
+    }
 }

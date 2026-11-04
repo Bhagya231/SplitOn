@@ -9,9 +9,21 @@ import BalancesPage from "./pages/Balance";
 import ExpenseDetails from "./pages/ExpenseDetailsPage";
 import {MemberLoader} from "./util/memberLoader"
 import { ExpenseDetailsLoader } from "./util/ExpenseLoaders";
+import RegisterPage from "./pages/RegisterPage";
+
+
+import LoginPage from "./pages/LoginPage";
 
 
 const router = createBrowserRouter([
+  {
+    path: "/login",
+    element: <LoginPage />,
+  },
+  {
+    path: "/register",
+    element: <RegisterPage />,
+  },
   {
     id: "root",
     path: "/",

@@ -3,6 +3,7 @@ import { useLoaderData } from "react-router-dom";
 import Card from "../components/common/Card";
 import {formatCurrency} from "../util/formatCurrency";
 import Button from "../components/common/Button";
+import BalanceChart from "../components/BalanceChart";
 
 
 
@@ -14,15 +15,19 @@ function BalancesPage() {
 
 
         <Card title="Total Summary">
-            <Card  className="w-25 bg-primary-subtle">
-                <div className="container">
-                    <h4 className="mb-3">Total Expenses</h4>
-
-                <h2 className="text-center">₹{total}</h2>
+          <div className="row g-3">
+            <div className="col-12 col-sm-8 col-md-6 col-lg-4">
+              <Card>
+                <div className="bg-primary-subtle rounded-3 p-3">
+                  <h5 className="mb-3">Total Expenses</h5>
+                  <h2 className="text-primary fw-bold mb-0">
+                    {formatCurrency(total)}
+                  </h2>
                 </div>
-            
-        </Card>
-
+              </Card>
+              
+            </div>
+          </div>
         </Card>
 
 
@@ -80,6 +85,16 @@ function BalancesPage() {
             </table>
           </div>
         )}
+      </Card>
+
+      <Card  title="Net Balance per Member">
+        <div className="container-fluid">
+      <div className="row">
+        <div className="col-12">
+          <BalanceChart members= {balances} />
+        </div>
+      </div>
+    </div>
       </Card>
     </div>
   );

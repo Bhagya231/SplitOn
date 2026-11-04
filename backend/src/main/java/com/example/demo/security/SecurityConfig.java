@@ -72,7 +72,7 @@ public class SecurityConfig
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(request -> request
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/auth/*").permitAll()
+                        .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/members/**").permitAll()
                         .requestMatchers("/expense/**").permitAll()
                         .anyRequest().authenticated())

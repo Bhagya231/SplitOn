@@ -47,7 +47,10 @@ public class Expenses extends BaseEntity
     private List<SplitMembers> splitMembers  = new ArrayList<>();
 
 
-
+//
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "group_id", nullable = false)
+//    private Groups group;
 
 
 

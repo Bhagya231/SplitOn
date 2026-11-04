@@ -44,4 +44,18 @@ public class AuthController
         return ResponseEntity.ok(response);
     }
 
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout()
+    {
+
+        log.info("Logout API called");
+
+        authFacade.logout();
+
+        return ResponseEntity.ok("logout completed");
+
+    }
+
+
 }

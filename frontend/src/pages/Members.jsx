@@ -1,5 +1,5 @@
 
-import { useLoaderData, useRevalidator } from "react-router-dom";
+import { useLoaderData, useRevalidator,useNavigate } from "react-router-dom";
 
 import api from "../util/Api";
 import Card from "../components/common/Card";
@@ -8,6 +8,7 @@ import MemberList from "../components/MemberList";
 import AddExpense from "../components/AddExpense";
 import Button from "../components/common/Button";
 import ExpenseHistory from "../components/ExpenseHistory";
+import Img from "../assets/membersbg.png"
 
 
 function MembersPage() 
@@ -15,6 +16,7 @@ function MembersPage()
 
     const {members, expenses} = useLoaderData();
     const revalidator = useRevalidator();
+    const navigate = useNavigate();
 
 
 
@@ -92,8 +94,14 @@ function MembersPage()
 
 
   return (
-    <div className="container-fluid py-3 bg-light">
-      <div className="row g-3 mx-4  mt-2">
+    <div className="container-fluid py-3  bg-light" 
+          style={{
+            backgroundImage: `url(${Img})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+          }}>
+      <div className="row g-3 mx-5  mt-2">
         <div className="col-12">
           <Card title="Add Member">
             <AddMember onAddMember={handleAddMember} />
@@ -101,6 +109,11 @@ function MembersPage()
         </div>
 
         <div className="col-12">
+            <div className="d-flex justify-content-end mx-4 mb-3">
+              <Button type="button" variant="primary" onClick={() => navigate("/members/add")}>
+                + Add Members
+            </Button>
+            </div>
           <Card title={`Members (${members ? members.length : 0})`}>
             <MemberList members={members}  onDeleteMember={handleDeleteMember} />
           </Card>
@@ -113,8 +126,8 @@ function MembersPage()
         </div>
 
         <div className="col-12">
-          <Card title={`Expense History (${expenses ? expenses.length : 0})`}>
-            <div className="d-flex justify-content-end mx-4 mb-3">
+
+          <div className="d-flex justify-content-end mx-4 mb-3">
                 <Button
                     type="button"
                     variant="primary"
@@ -123,6 +136,8 @@ function MembersPage()
                     + Add Expense
                 </Button>
             </div>
+          <Card title={`Expense History (${expenses ? expenses.length : 0})`}>
+            
             <ExpenseHistory expenses={expenses} onDeleteExpense={handleDeleteExpense}/>
           </Card>
         </div>

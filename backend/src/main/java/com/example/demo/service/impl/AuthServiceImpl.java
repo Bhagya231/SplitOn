@@ -5,6 +5,7 @@ import com.example.demo.dto.auth.LoginResponse;
 import com.example.demo.dto.auth.RegisterRequest;
 import com.example.demo.dto.auth.RegisterResponse;
 import com.example.demo.entity.Members;
+import com.example.demo.enums.LoginStatus;
 import com.example.demo.exceptions.EmailAlreadyExistsException;
 import com.example.demo.exceptions.InvalidCredentialsException;
 import com.example.demo.mappers.MembersMapper;
@@ -18,9 +19,14 @@ import org.slf4j.Logger;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 
 @Service
@@ -100,6 +106,9 @@ public class AuthServiceImpl implements AuthService
                 return new InvalidCredentialsException("user not register with this email");
             });
 
+            members.setLoginStatus(LoginStatus.LOGGED_IN);
+            membersRepository.save(members);
+
 
             CustomUserDetails userDetails = new CustomUserDetails(members);
 
@@ -125,6 +134,45 @@ public class AuthServiceImpl implements AuthService
             throw new RuntimeException("Unable to login");
         }
     }
+
+
+    @Override
+    @Transactional
+    public void logout()
+    {
+
+        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+
+        UUID id = userDetails.getUserId();
+
+        log.info("Logout started for user ID {}", id);
+
+        try {
+            Members members = membersRepository.getMemberById(id.toString())
+                    .orElseThrow(() -> {
+                        log.warn("member  not found with id {}",id);
+                        return new UsernameNotFoundException("member  not found");
+                    });
+
+            members.setLastLogout(LocalDateTime.now());
+            members.setLoginStatus(LoginStatus.LOGGED_OUT);
+            membersRepository.save(members);
+
+
+            log.info("Logout completed successfully for user ID {}", id);
+
+
+
+        } catch (UsernameNotFoundException e) {
+            log.warn("Logout failed: user not found with ID {}", id);
+            throw e;
+        } catch (Exception e) {
+            log.error("Unexpected error during logout for user ID {}", id, e);
+            throw new RuntimeException("Unable to logout", e);
+        }
+    }
+
 
 
 
