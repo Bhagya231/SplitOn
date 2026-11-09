@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 
 @Entity
@@ -38,11 +40,15 @@ public class Members extends BaseEntity
     @Column(name = "last_logout")
     private LocalDateTime lastLogout;
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "group_id", nullable = false)
-//    private Groups group;
+    @OneToMany(mappedBy = "member")
+    private List<GroupMembers> groupMember = new ArrayList<>();
+
+    @OneToMany(mappedBy = "members")
+    private List<SplitMembers> splitMember = new ArrayList<>();
 
 
+    @OneToMany(mappedBy = "payer")
+    private List<Expenses> paidExpenses = new ArrayList<>();
 
 
 

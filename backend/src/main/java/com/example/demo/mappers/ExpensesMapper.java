@@ -13,11 +13,10 @@ import org.mapstruct.Mapping;
 public interface ExpensesMapper
 {
 
-
-
-    @Mapping( target = "payerName",ignore = true)
-    ExpensesResponse toResponse(Expenses expenses);
-
+    @Mapping(source = "payer.id", target = "payerId")
+    @Mapping(source = "payer.name", target = "payerName")
+    @Mapping(source = "splitMembers", target = "splitMembers")
+    ExpensesResponse toResponse(Expenses expense);
 
     @Mapping(source = "members.id", target = "memberId")
     @Mapping(source = "members.name", target = "memberName")

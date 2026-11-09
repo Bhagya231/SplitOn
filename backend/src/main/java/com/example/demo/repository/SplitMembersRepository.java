@@ -22,14 +22,14 @@ public interface SplitMembersRepository  extends JpaRepository<SplitMembers, UUI
         WHERE sm.expenses_id  = :expenseId 
         AND sm.is_deleted = false;
 """,nativeQuery = true)
-    List<SplitMembers> getSplitMembersByExpenseIds(@Param("expenseId") String expenseId);
+    List<SplitMembers> getSplitMembersByExpenseId(@Param("expenseId") String expenseId);
 
 
     @Query(value = """
         SELECT sm.*
         FROM split_members sm
         WHERE sm.members_id = :id
-        AND is_deleted = false;
+        AND sm.is_deleted = false
     """,nativeQuery = true)
     List<SplitMembers> getSplitMemberByMemberId(@Param("id") String id);
 

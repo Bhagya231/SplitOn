@@ -1,20 +1,21 @@
 package com.example.demo.service.impl;
 
 import com.example.demo.dto.*;
-import com.example.demo.entity.Expenses;
-import com.example.demo.entity.Members;
-import com.example.demo.entity.SplitMembers;
+import com.example.demo.entity.*;
 import com.example.demo.enums.BalanceStatus;
 import com.example.demo.enums.SplitType;
 import com.example.demo.exceptions.BadRequestException;
+import com.example.demo.mappers.ExpensesMapper;
 import com.example.demo.repository.ExpensesRepository;
-import com.example.demo.repository.MembersRepository;
+import com.example.demo.repository.GroupMembersRepository;
 import com.example.demo.repository.SplitMembersRepository;
 import com.example.demo.service.api.ExpensesService;
 import com.example.demo.util.AppLogger;
 
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,7 +24,6 @@ import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static java.util.Collections.emptyList;
 
 @Service
 @RequiredArgsConstructor
@@ -33,39 +33,47 @@ public class ExpensesServiceImpl implements ExpensesService
     private static final Logger log = AppLogger.getLogger(ExpensesServiceImpl.class);
 
     private final ExpensesRepository expensesRepository;
-    private  final SplitMembersRepository splitMembersRepository;
-    private final MembersRepository membersRepository;
+    private final SplitMembersRepository splitMembersRepository;
+    private final GroupMembersRepository groupMembersRepository;
+    private final ExpensesMapper expensesMapper;
 
 
 
-    @Transactional
     @Override
-    public ExpensesResponse addExpenses(ExpensesRequest request)
+    @Transactional
+    public ExpensesResponse addExpenses(Groups group, ExpensesRequest request)
     {
 
         try {
             log.info("Started adding expense: {}", request.getTitle());
 
 
-            List<SplitMemberRequest> req = validateSplitRequests(request);
+            validateSplitRequests(request);
 
-            // Get active participant details.
-            Map<UUID, Members> memberMap = getActiveMembersMap(req);
+            UUID payerId = request.getPayerId();
 
-            //  Get payer independently.
-            Members payer = getPayer(request.getPayerId(), memberMap);
+            Map<UUID, Members> memberMap = getActiveMembersMap(request.getSplitMembers(), payerId, group);
 
-            // Calculate participant shares.
-            Map<UUID, BigDecimal> shares = calculateShares(req, request.getAmount(), request.getSplitType(), payer.getId());
+            Members payer = memberMap.get(payerId);
 
-            //  Create expense.
+            if (payer == null)
+            {
+                log.warn("payer must be an active member of this group {}",payerId);
+                throw new BadRequestException("Payer must be an active member of this group");
+            }
+
+            Map<UUID, BigDecimal> shares = calculateShares(request.getSplitMembers(), request.getAmount(), request.getSplitType(), payerId);
+
+
+
             Expenses expense = new Expenses();
 
             expense.setTitle(request.getTitle().trim());
             expense.setAmount(request.getAmount());
             expense.setDate(request.getDate());
-            expense.setPayerId(payer.getId());
+            expense.setPayer(payer);
             expense.setSplitType(request.getSplitType());
+            expense.setExpense_groups(group);
 
 
             Expenses savedExpense = expensesRepository.save(expense);
@@ -73,31 +81,33 @@ public class ExpensesServiceImpl implements ExpensesService
 
             List<SplitMembers> splitMembers = new ArrayList<>();
 
-            for (SplitMemberRequest memberRequest : req) {
+            for (SplitMemberRequest splitRequest : request.getSplitMembers())
+            {
+
+                UUID memberId = splitRequest.getId();
+                Members member = memberMap.get(memberId);
 
                 SplitMembers splitMember = new SplitMembers();
 
                 splitMember.setExpenses(savedExpense);
-
-                splitMember.setMembers(memberMap.get(memberRequest.getId()));
-
-
-                splitMember.setPercentage(SplitType.PERCENTAGE.equals(request.getSplitType()) ? memberRequest.getPercentage() : null);
-
-
-                splitMember.setValue(shares.get(memberRequest.getId()));
-
-
+                splitMember.setMembers(member);
+                splitMember.setPercentage(SplitType.PERCENTAGE.equals(request.getSplitType()) ? splitRequest.getPercentage() : null);
+                splitMember.setValue(shares.get(memberId));
 
                 splitMembers.add(splitMember);
+
+
             }
 
 
             List<SplitMembers> savedSplits = splitMembersRepository.saveAll(splitMembers);
 
-            log.info("Expense created successfully: {}", savedExpense.getId());
+            savedExpense.setSplitMembers(savedSplits);
 
-            return toResponse(savedExpense,savedSplits,payer.getName());
+            log.info("Expense created successfully for group {}", group.getId());
+
+            return expensesMapper.toResponse(savedExpense);
+
         }catch (IllegalArgumentException e)
         {
             log.error("error while adding the expense {} {}",request.getTitle(),e.getMessage());
@@ -117,114 +127,44 @@ public class ExpensesServiceImpl implements ExpensesService
 
 
 
-    public ExpensesResponse toResponse(Expenses expenses, List<SplitMembers> splitMembers,String payerName)
-    {
-
-        ExpensesResponse response = new ExpensesResponse();
-
-
-
-        response.setId(expenses.getId());
-        response.setTitle(expenses.getTitle());
-        response.setAmount(expenses.getAmount());
-        response.setDate(expenses.getDate());
-        response.setPayerId(expenses.getPayerId());
-        response.setPayerName(payerName);
-        response.setSplitType(expenses.getSplitType());
-
-
-        List<SplitMemberResponse> splitResponses = createSplitResponses(splitMembers);
-
-
-        response.setSplitMembers(splitResponses);
-
-        return response;
-
-    }
-
-    private  List<SplitMemberResponse> createSplitResponses(List<SplitMembers> splitMembers)
-    {
-        List<SplitMemberResponse> splitResponses = new ArrayList<>();
-
-        for (SplitMembers splitMember : splitMembers) {
-
-            SplitMemberResponse splitResponse = new SplitMemberResponse();
-
-            splitResponse.setId(splitMember.getId());
-            splitResponse.setMemberId(splitMember.getMembers().getId());
-            splitResponse.setMemberName(splitMember.getMembers().getName());
-            splitResponse.setPercentage(splitMember.getPercentage());
-            splitResponse.setValue(splitMember.getValue());
-
-            splitResponses.add(splitResponse);
-        }
-
-        return splitResponses;
-    }
-
-
     @Override
-    public List<ExpensesResponse> getAllExpenses()
+    public Page<ExpensesResponse> getAllExpenses(Groups group, String search, Pageable pageable)
     {
+        log.info("Started fetching all expenses");
 
         try {
-            log.info("started getting all Expense  ");
 
-            List<Expenses> expenses = expensesRepository.getAllExpenses();
+            Page<Expenses> expensesPage = expensesRepository.getAllExpensesByGroupId(group.getId().toString(), search, pageable);
 
-            if (expenses.isEmpty())
-            {
-                return emptyList();
-            }
+            return expensesPage.map(expense -> {
+                            expense.setSplitMembers(splitMembersRepository.getSplitMembersByExpenseId(expense.getId().toString()));
 
-            List<Members> members = membersRepository.getAllMembers();
-
-            Map<UUID, String> memberNames = members.stream().collect(Collectors.toMap(Members::getId, Members::getName));
-            List<ExpensesResponse> responses = new ArrayList<>();
-
-            for (Expenses expense : expenses)
-            {
-                List<SplitMembers> splitMembers = splitMembersRepository.getSplitMembersByExpenseIds(expense.getId().toString());
-
-                String payerName = memberNames.get(expense.getPayerId());
-
-
-
-                responses.add(toResponse(expense,splitMembers,payerName));
-            }
-
-
-            log.info("fetching the all expenses is completed successfully");
-            return responses;
+                return expensesMapper.toResponse(expense);
+            });
 
         } catch (Exception e) {
-            log.error("error while fetching the members {} ",e.getMessage());
-            throw new RuntimeException("error while fetching the error ",e);
+            log.error("Error while fetching expenses", e);
+            throw new RuntimeException("Error while fetching expenses", e);
         }
-
-
-
     }
 
 
     @Override
-    public ExpensesResponse getExpenseById(Expenses expense) {
+    public ExpensesResponse getExpenseById(Expenses expense)
+    {
         try {
             log.info("Started fetching expense by ID {}",expense.getId());
 
 
 
-            List<SplitMembers> splitMembers = splitMembersRepository.getSplitMembersByExpenseIds(expense.getId().toString());
+            List<SplitMembers> activeSplits = splitMembersRepository.getSplitMembersByExpenseId(expense.getId().toString());
 
-
-            String payerName = membersRepository.findById(expense.getPayerId()).map(Members::getName).orElse(null);
-
-
-            ExpensesResponse response = toResponse(expense, splitMembers, payerName);
+            expense.setSplitMembers(activeSplits);
 
             log.info("Expense fetched successfully with ID: {}", expense.getId());
 
-            return response;
+            return expensesMapper.toResponse(expense);
+
 
         } catch (Exception e) {
             log.error("Error while fetching expense: {}", e.getMessage(), e);
@@ -233,95 +173,121 @@ public class ExpensesServiceImpl implements ExpensesService
         }
     }
 
-
     @Override
-    public List<BalanceResponse> getAllBalances()
+    public List<BalanceResponse> getAllBalances(Groups group)
     {
+
+        log.info("Fetching group balances");
+
         try {
-            log.info("Started calculating member balances");
 
-            List<Members> members = membersRepository.getAllMembers();
+            String groupId = group.getId().toString();
 
-            List<Expenses> expenses = expensesRepository.getAllExpenses();
+            List<GroupMembers> groupMembers = groupMembersRepository.findActiveMembersByGroupId(groupId);
+
+            List<Expenses> expenses = expensesRepository.getAllExpensesByGroupId(groupId);
+
+            Map<UUID, BigDecimal> totalPaid = new HashMap<>();
+            Map<UUID, BigDecimal> totalShare = new HashMap<>();
+
+
+            for (GroupMembers groupMember : groupMembers)
+            {
+                UUID memberId = groupMember.getMember().getId();
+
+                totalPaid.put(memberId, BigDecimal.ZERO);
+                totalShare.put(memberId, BigDecimal.ZERO);
+            }
+
+            for (Expenses expense : expenses)
+            {
+
+                UUID payerId = expense.getPayer().getId();
+
+                BigDecimal oldPaid = totalPaid.get(payerId);
+
+                BigDecimal newPaid = oldPaid.add(expense.getAmount());
+
+                totalPaid.put(payerId, newPaid);
+
+
+
+                List<SplitMembers> splits = splitMembersRepository.getSplitMembersByExpenseId(expense.getId().toString());
+
+
+                for (SplitMembers split : splits)
+                {
+
+                    UUID memberId = split.getMembers().getId();
+
+                    BigDecimal oldShare = totalShare.get(memberId);
+
+                    BigDecimal newShare = oldShare.add(split.getValue());
+
+                    totalShare.put(memberId, newShare);
+                }
+            }
+
 
             List<BalanceResponse> responses = new ArrayList<>();
 
-            for(Members member : members)
+            for (GroupMembers groupMember : groupMembers)
             {
-                BigDecimal totalPaid = BigDecimal.ZERO;
-                BigDecimal totalShare = BigDecimal.ZERO;
 
-                for(Expenses expense : expenses)
+                Members member = groupMember.getMember();
+
+                UUID memberId = member.getId();
+
+                BigDecimal paid = totalPaid.get(memberId);
+                BigDecimal share = totalShare.get(memberId);
+
+
+                BigDecimal balance = paid.subtract(share);
+
+                BalanceResponse response = new BalanceResponse();
+
+                response.setMemberId(memberId);
+                response.setMemberName(member.getName());
+                response.setTotalPaid(paid);
+                response.setTotalShare(share);
+                response.setBalance(balance);
+
+
+                if (balance.compareTo(BigDecimal.ZERO) > 0)
                 {
-                    if (member.getId().equals(expense.getPayerId()))
-                    {
-                        totalPaid = totalPaid.add(expense.getAmount());
-                    }
-
-                    List<SplitMembers> splitMembers = splitMembersRepository.getSplitMembersByExpenseIds(expense.getId().toString());
-
-                    for(SplitMembers splitMember : splitMembers)
-                    {
-                        if(member.getId().equals(splitMember.getMembers().getId()))
-                        {
-                            totalShare = totalShare.add(splitMember.getValue());
-                        }
-                    }
-
+                    response.setStatus(BalanceStatus.SHOULD_RECEIVE);
+                }
+                else if (balance.compareTo(BigDecimal.ZERO) < 0)
+                {
+                    response.setStatus(BalanceStatus.OWES);
+                }
+                else {
+                    response.setStatus(BalanceStatus.SETTLED);
                 }
 
-
-                BalanceResponse response = getResponse(member, totalPaid, totalShare);
-
                 responses.add(response);
-
             }
-
-            log.info("Successfully calculated member balances");
 
             return responses;
 
-        }catch (Exception e)
+        } catch (Exception e)
         {
-            log.error("error while getting the balance {} ", e.getMessage());
-            throw new RuntimeException("error while getting the balance ",e);
+            log.error("Error while fetching group balances", e);
+            throw new BadRequestException( e.getMessage());
         }
     }
 
-    private BalanceResponse getResponse(Members member, BigDecimal totalPaid, BigDecimal totalShare)
-    {
-        BigDecimal balance = totalPaid.subtract(totalShare);
 
-        BalanceResponse response = new BalanceResponse();
-
-        response.setMemberId(member.getId());
-        response.setMemberName(member.getName());
-        response.setTotalPaid(totalPaid);
-        response.setTotalShare(totalShare);
-        response.setBalance(balance);
-
-
-        if (balance.compareTo(BigDecimal.ZERO) > 0)
-        {
-            response.setStatus(BalanceStatus.SHOULD_RECEIVE);
-        } else if (balance.compareTo(BigDecimal.ZERO) < 0)
-        {
-            response.setStatus(BalanceStatus.OWES);
-        } else {
-            response.setStatus(BalanceStatus.SETTLED);
-        }
-        return response;
-    }
 
 
     @Override
-    public BigDecimal getTotalSpending()
+    public BigDecimal getTotalSpending(Groups group)
     {
 
         try {
             log.info("Started calculating total spending");
 
-            List<Expenses> expenses = expensesRepository.getAllExpenses();
+            List<Expenses> expenses = expensesRepository.getAllExpensesByGroupId(group.getId().toString());
 
             BigDecimal totalSpending = BigDecimal.ZERO;
 
@@ -351,7 +317,7 @@ public class ExpensesServiceImpl implements ExpensesService
 
 
 
-            List<SplitMembers> splitMembers = splitMembersRepository.getSplitMembersByExpenseIds(expense.getId().toString());
+            List<SplitMembers> splitMembers = splitMembersRepository.getSplitMembersByExpenseId(expense.getId().toString());
 
 
 
@@ -387,29 +353,35 @@ public class ExpensesServiceImpl implements ExpensesService
         log.info("Started updating expense: {}", expense.getId());
 
 
-        List<SplitMemberRequest> req = validateSplitRequests(request);
+        validateSplitRequests(request);
+
+        Groups group = expense.getExpense_groups();
+        UUID payerId = request.getPayerId();
+
+        Map<UUID, Members> memberMap = getActiveMembersMap(request.getSplitMembers(), payerId, group);
 
 
-        Map<UUID, Members> memberMap = getActiveMembersMap(req);
+        Members payer = memberMap.get(payerId);
+
+        if (payer == null)
+        {
+            throw new BadRequestException("Payer must be an active member of this group");
+        }
 
 
-        Members payer = getPayer(request.getPayerId(), memberMap);
-
-
-        Map<UUID, BigDecimal> shares = calculateShares(req, request.getAmount(), request.getSplitType(), payer.getId());
+        Map<UUID, BigDecimal> shares = calculateShares(request.getSplitMembers(), request.getAmount(), request.getSplitType(), payerId);
 
 
         expense.setTitle(request.getTitle());
         expense.setAmount(request.getAmount());
         expense.setDate(request.getDate());
-        expense.setPayerId(payer.getId());
+        expense.setPayer(payer);
         expense.setSplitType(request.getSplitType());
 
         Expenses savedExpense = expensesRepository.save(expense);
 
 
-        List<SplitMembers> existingSplits = splitMembersRepository.getSplitMembersByExpenseIds(expense.getId().toString());
-
+        List<SplitMembers> existingSplits = splitMembersRepository.getSplitMembersByExpenseId(expense.getId().toString());
 
         Map<UUID, SplitMembers> existingSplitMap = new HashMap<>();
 
@@ -418,17 +390,18 @@ public class ExpensesServiceImpl implements ExpensesService
             existingSplitMap.putIfAbsent(split.getMembers().getId(), split);
         }
 
+        Set<UUID> requestedMemberIds = new HashSet<>();
 
         List<SplitMembers> updatedSplits = new ArrayList<>();
 
-        for (SplitMemberRequest memberRequest : req)
+
+        for (SplitMemberRequest memberRequest : request.getSplitMembers())
         {
 
             UUID memberId = memberRequest.getId();
-
+            requestedMemberIds.add(memberId);
 
             SplitMembers splitMember = existingSplitMap.get(memberId);
-
 
             if (splitMember == null)
             {
@@ -436,232 +409,196 @@ public class ExpensesServiceImpl implements ExpensesService
             }
 
             splitMember.setExpenses(savedExpense);
-
             splitMember.setMembers(memberMap.get(memberId));
 
             splitMember.setPercentage(SplitType.PERCENTAGE.equals(request.getSplitType()) ? memberRequest.getPercentage() : null);
 
             splitMember.setValue(shares.get(memberId));
-
-
             splitMember.setIsDeleted(false);
 
             updatedSplits.add(splitMember);
         }
 
-        //  Soft-delete participants removed from the expense.
+
         List<SplitMembers> removedSplits = new ArrayList<>();
 
-        for (SplitMembers oldSplit : existingSplits) {
+        for (SplitMembers oldSplit : existingSplits)
+        {
 
-            UUID oldMemberId = oldSplit.getMembers().getId();
+            UUID memberId = oldSplit.getMembers().getId();
 
-            if (!memberMap.containsKey(oldMemberId)) {
-
+            if (!requestedMemberIds.contains(memberId))
+            {
                 oldSplit.setIsDeleted(true);
-
                 removedSplits.add(oldSplit);
             }
         }
 
-
-        splitMembersRepository.saveAll(updatedSplits);
-
+        List<SplitMembers> savedUpdatedSplits = splitMembersRepository.saveAll(updatedSplits);
 
         if (!removedSplits.isEmpty())
         {
             splitMembersRepository.saveAll(removedSplits);
         }
 
+        ExpensesResponse response = expensesMapper.toResponse(savedExpense);
+
+        response.setSplitMembers(savedUpdatedSplits.stream().map(expensesMapper::toSplitMemberResponse).toList());
+
         log.info("Expense updated successfully: {}", savedExpense.getId());
 
-
-        return toResponse(savedExpense, updatedSplits, payer.getName());
+        return response;
     }
 
 
 
 
 
-    private List<SplitMemberRequest> validateSplitRequests(ExpensesRequest request)
+
+    private void validateSplitRequests(ExpensesRequest request)
     {
 
-        Set<SplitMemberRequest> splitRequests = request.getSplitMembers();
-
-        if (splitRequests == null || splitRequests.isEmpty())
+        if (request.getSplitMembers() == null || request.getSplitMembers().isEmpty())
         {
-            log.warn("At least one participant is required {}",request.getSplitMembers());
-            throw new IllegalArgumentException("At least one participant is required");
+            log.warn("At least one split member is required {} ",request.getSplitMembers());
+            throw new BadRequestException("At least one split member is required");
         }
 
+        Set<UUID> memberIds = new HashSet<>();
 
-        Set<UUID> participantIds = new HashSet<>();
-
-        for (SplitMemberRequest req : splitRequests)
+        for (SplitMemberRequest split : request.getSplitMembers())
         {
-            participantIds.add(req.getId());
+
+            if (split.getId() == null)
+            {
+                log.warn("split member ID is required {}",split);
+                throw new BadRequestException("Split member ID is required");
+            }
+
+            if (!memberIds.add(split.getId()))
+            {
+                log.warn("Duplicate split members are not allowed {}",split.getId());
+                throw new BadRequestException("Duplicate split members are not allowed");
+            }
         }
-
-        if (participantIds.size() != splitRequests.size() || participantIds.contains(null))
-        {
-            log.warn("Invalid or duplicate participants " );
-            throw new IllegalArgumentException("Invalid or duplicate participants");
-        }
-
-
-        return new ArrayList<>(splitRequests);
     }
 
 
 
-    private Map<UUID, Members> getActiveMembersMap(List<SplitMemberRequest> requests)
+    private Map<UUID, Members> getActiveMembersMap(Set<SplitMemberRequest> splitRequests, UUID payerId, Groups group)
     {
 
-        Set<UUID> participantIds = new HashSet<>();
+        Set<String> memberIds = splitRequests.stream().map(split -> split.getId().toString())
+                .collect(Collectors.toSet());
 
-        for (SplitMemberRequest request : requests)
+        memberIds.add(payerId.toString());
+
+        List<Members> activeMembers = groupMembersRepository.findActiveMembersByIdsAndGroupId(memberIds, group.getId().toString());
+
+        Map<UUID, Members> memberMap = activeMembers.stream().collect(Collectors.toMap(Members::getId, member -> member));
+
+        if (memberMap.size() != memberIds.size())
         {
-            participantIds.add(request.getId());
+            throw new BadRequestException("Payer and all split members must belong to this group");
         }
 
-        List<Members> activeMembers = membersRepository.findActiveMembersByIds(participantIds);
-
-        if (activeMembers.size() != participantIds.size())
-        {
-            log.info("One or more participants do not exist or are inactive");
-            throw new IllegalArgumentException("One or more participants do not exist or are inactive");
-        }
-
-        Map<UUID, Members> membersMap = new HashMap<>();
-
-        for (Members member : activeMembers)
-        {
-            membersMap.put(member.getId(), member);
-        }
-
-        return membersMap;
+        return memberMap;
     }
 
 
-    private Members getPayer(UUID payerId, Map<UUID, Members> memberMap)
-    {
+    private Map<UUID, BigDecimal> calculateShares(Set<SplitMemberRequest> splitRequests,BigDecimal amount,SplitType splitType, UUID payerId)
+     {
 
-        if (payerId == null)
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0)
         {
-            log.warn("Payer is required {}", (Object) null);
-            throw new IllegalArgumentException("Payer is required");
+            throw new BadRequestException("Expense amount must be greater than zero");
+        }
+
+        if (amount.scale() > 2)
+        {
+            throw new BadRequestException("Expense amount cannot have more than 2 decimal places");
+        }
+
+        Map<UUID, BigDecimal> shares = new LinkedHashMap<>();
+
+        BigDecimal totalAmount = amount.setScale(2, RoundingMode.HALF_UP);
+
+        if (splitType == SplitType.EQUAL)
+        {
+
+            BigDecimal equalShare = totalAmount.divide(BigDecimal.valueOf(splitRequests.size()), 2, RoundingMode.DOWN);
+
+            for (SplitMemberRequest split : splitRequests)
+            {
+                shares.put(split.getId(), equalShare);
+            }
+
+        } else if (splitType == SplitType.PERCENTAGE)
+        {
+
+            validatePercentages(splitRequests);
+
+            for (SplitMemberRequest split : splitRequests)
+            {
+
+                BigDecimal percentage = split.getPercentage();
+
+                BigDecimal share = totalAmount.multiply(percentage).divide(BigDecimal.valueOf(100), 2, RoundingMode.DOWN);
+
+                shares.put(split.getId(), share);
+            }
+
+        } else {
+            throw new BadRequestException("Invalid split type");
         }
 
 
-        if (memberMap.containsKey(payerId))
+        BigDecimal calculatedTotal = shares.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal difference = totalAmount.subtract(calculatedTotal);
+
+        if (difference.compareTo(BigDecimal.ZERO) != 0)
         {
-            return memberMap.get(payerId);
+
+            UUID adjustmentMember = shares.containsKey(payerId) ? payerId : shares.keySet().iterator().next();
+
+            shares.put(adjustmentMember, shares.get(adjustmentMember).add(difference));
         }
 
-        return membersRepository.getMemberById(payerId.toString()).orElseThrow(() -> {
-            log.warn("Payer {} does not exist or is inactive",payerId);
-            return  new  IllegalArgumentException("Payer does not exist or is inactive");
-        });
-
+        return shares;
     }
 
 
 
-    private void validatePercentages(List<SplitMemberRequest> requests)
+    private void validatePercentages(Set<SplitMemberRequest> splitRequests)
     {
-        log.info("validating percentage started");
 
         BigDecimal totalPercentage = BigDecimal.ZERO;
 
-        for (SplitMemberRequest member : requests)
+        for (SplitMemberRequest split : splitRequests)
         {
 
-            BigDecimal percentage = member.getPercentage();
+            BigDecimal percentage = split.getPercentage();
 
-            if (percentage == null || percentage.compareTo(BigDecimal.ZERO) < 0 || percentage.compareTo(new BigDecimal("100")) > 0)
+            if (percentage == null || percentage.compareTo(BigDecimal.ZERO) < 0 || percentage.compareTo(BigDecimal.valueOf(100)) > 0)
             {
-                log.warn("Percentage must be between 0 and 100");
-                throw new IllegalArgumentException("Percentage must be between 0 and 100");
+
+                throw new BadRequestException("Percentage must be between 0 and 100");
             }
 
             totalPercentage = totalPercentage.add(percentage);
         }
 
-        if (totalPercentage.compareTo(new BigDecimal("100")) != 0)
+        if (totalPercentage.compareTo(BigDecimal.valueOf(100)) != 0)
         {
-            log.warn("Total percentage {} must equal 100%", totalPercentage);
-            throw new IllegalArgumentException("Total percentage must equal 100%");
+            throw new BadRequestException("Total split percentage must be exactly 100");
         }
     }
 
 
 
-    private Map<UUID, BigDecimal> calculateShares(List<SplitMemberRequest> requests, BigDecimal amount, SplitType splitType, UUID payerId)
-    {
 
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0)
-        {
-            log.warn("Expense amount {} must be greater than zero",amount);
-            throw new IllegalArgumentException("Expense amount must be greater than zero");
-        }
 
-        if (amount.scale() > 2)
-        {
-            log.info("Expense amount {} cannot have more than 2 decimal places",amount);
-            throw new IllegalArgumentException("Expense amount cannot have more than 2 decimal places");
-        }
-
-        if (requests == null || requests.isEmpty())
-        {
-            log.warn("At least one split member is required {}",requests);
-            throw new IllegalArgumentException("At least one split member is required");
-        }
-
-        Map<UUID, BigDecimal> shares = new HashMap<>();
-
-        UUID remainderReceiver = requests.stream().anyMatch(member -> member.getId().equals(payerId)) ? payerId : requests.getFirst().getId();
-
-        BigDecimal allocatedAmount = BigDecimal.ZERO;
-
-        if (splitType == SplitType.EQUAL) {
-
-            BigDecimal baseShare = amount.divide(BigDecimal.valueOf(requests.size()), 2, RoundingMode.DOWN);
-
-            for (SplitMemberRequest member : requests)
-            {
-                shares.put(member.getId(), baseShare);
-                allocatedAmount = allocatedAmount.add(baseShare);
-            }
-
-            BigDecimal remainingAmount = amount.subtract(allocatedAmount);
-
-            shares.put(remainderReceiver, shares.get(remainderReceiver).add(remainingAmount));
-
-        } else if (splitType == SplitType.PERCENTAGE)
-        {
-
-            validatePercentages(requests);
-
-            for (SplitMemberRequest member : requests)
-            {
-
-                BigDecimal share = amount.multiply(member.getPercentage()).divide(new BigDecimal("100"), 2, RoundingMode.DOWN);
-
-                shares.put(member.getId(), share);
-                allocatedAmount = allocatedAmount.add(share);
-            }
-
-            BigDecimal remainingAmount = amount.subtract(allocatedAmount);
-
-            shares.put(remainderReceiver, shares.get(remainderReceiver).add(remainingAmount));
-
-        } else {
-            log.warn("Invalid split type");
-            throw new IllegalArgumentException("Invalid split type");
-        }
-
-        return shares;
-    }
 
 
 

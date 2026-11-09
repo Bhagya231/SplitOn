@@ -22,6 +22,7 @@ public class ExpensesRequest
     private BigDecimal amount;
 
     @NotNull(message = "Expense date is required")
+    @PastOrPresent(message = "Expense date cannot be in the future")
     private LocalDate date;
 
     @NotNull(message = "Payer is required")
