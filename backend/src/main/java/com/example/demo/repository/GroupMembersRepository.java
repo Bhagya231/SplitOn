@@ -25,8 +25,8 @@ public interface GroupMembersRepository extends JpaRepository<GroupMembers, UUID
         FROM group_members gm
         INNER JOIN members m ON m.id = gm.member_id
         WHERE gm.expense_groups_id = :groupId
-          AND gm.is_deleted = 0
-          AND m.is_deleted = 0
+          AND gm.is_deleted = false
+          AND m.is_deleted = false
           AND ( :search IS NULL
               OR :search = ''
               OR LOWER(m.name) LIKE LOWER(CONCAT('%', :search, '%'))
@@ -37,8 +37,8 @@ public interface GroupMembersRepository extends JpaRepository<GroupMembers, UUID
         FROM group_members gm
         INNER JOIN members m ON m.id = gm.member_id
         WHERE gm.expense_groups_id = :groupId
-          AND gm.is_deleted = 0
-          AND m.is_deleted = 0
+          AND gm.is_deleted = false
+          AND m.is_deleted = false
           AND (
               :search IS NULL
               OR :search = ''
@@ -46,14 +46,16 @@ public interface GroupMembersRepository extends JpaRepository<GroupMembers, UUID
               OR LOWER(m.email) LIKE LOWER(CONCAT('%', :search, '%')))""", nativeQuery = true)
     Page<GroupMembers> findActiveMembersByGroupId(@Param("groupId") String groupId, @Param("search") String search, Pageable pageable);
 
-    @Query(value = """
-            SELECT *
-            FROM group_members
-            WHERE expense_groups_id = :groupId
-              AND is_deleted = false
-            """, nativeQuery = true)
-    List<GroupMembers> findActiveMembersByGroupId(@Param("groupId") String groupId);
 
+
+
+    @Query(value = """
+    SELECT gm.*
+    FROM group_members gm
+    WHERE gm.expense_groups_id = :groupId
+    AND gm.is_deleted = false
+    """, nativeQuery = true)
+    List<GroupMembers> findActiveGroupMembers(@Param("groupId") String groupId);
 
     @Query(value = """
     SELECT gm.*
@@ -63,6 +65,7 @@ public interface GroupMembersRepository extends JpaRepository<GroupMembers, UUID
       AND gm.is_deleted = false
     """, nativeQuery = true)
     Optional<GroupMembers> findActiveMembers(@Param("memberId") String memberId, @Param("groupId") String groupId);
+
 
 
 

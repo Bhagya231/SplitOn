@@ -95,20 +95,33 @@ function LoginPage()
             password: formData.password,
           });
 
-      const loginData = response.data;
+      const data = response.data;
 
-      if (!loginData.token) {
+      if (!data.token) 
+      {
         setServerError("Login response did not contain an authentication token.");
         return;
       }
 
-        localStorage.setItem("token", loginData.token);
-        localStorage.setItem("role", loginData.role);
-        localStorage.setItem("name", loginData.name);
+              
+
+        localStorage.setItem("token", data.token);
+
+        const member = {
+            id: data.id,
+            name: data.name,
+            email: data.email,
+            role: data.role,
+            createdAt: data.createdAt,
+            updatedAt: data.updatedAt
+        };
+
+        localStorage.setItem("member", JSON.stringify(member));
     
 
 
-      return navigate("/");
+      navigate("/app", { replace: true });
+
     } catch (error) {
       console.error("Login API error:", error);
 

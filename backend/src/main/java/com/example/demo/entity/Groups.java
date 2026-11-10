@@ -28,6 +28,7 @@ public class Groups extends BaseEntity
     private List<GroupMembers> groupMembers = new ArrayList<>();
 
 
+
     @OneToMany(mappedBy = "expense_groups",fetch = FetchType.LAZY)
     private List<Expenses> expenses = new ArrayList<>();
 }

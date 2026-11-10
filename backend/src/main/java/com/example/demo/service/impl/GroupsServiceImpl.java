@@ -46,7 +46,7 @@ public class GroupsServiceImpl implements GroupsService
             log.info("get group by members id is started in service {}",member.getName());
             List<Groups> groups = groupsRepository.findActiveGroupsByMemberId(member.getId().toString());
 
-            return groups.stream().map(groupsMapper::toResponse).toList();
+            return groups.stream().map(this::convertToResponse).toList();
 
         } catch (Exception e)
         {
@@ -107,18 +107,10 @@ public class GroupsServiceImpl implements GroupsService
 
             log.info("Group created successfully: {}", savedGroup.getId());
 
-            GroupResponse response = groupsMapper.toResponse(savedGroup);
 
-            List<GroupMembersResponse> memberResponses = new ArrayList<>();
 
-            for (GroupMembers groupMember : savedGroupMembers)
-            {
-                memberResponses.add(groupsMapper.toResponse(groupMember));
-            }
+            return convertToResponse(savedGroup);
 
-            response.setGroupMembers(memberResponses);
-
-            return response;
         }catch (BadRequestException e)
         {
             log.error("error while creating the group {}",request.getName());
@@ -140,13 +132,10 @@ public class GroupsServiceImpl implements GroupsService
     {
 
         try {
-            List<GroupMembers> activeMembers = validateGroupMembers(group, member);
 
-            GroupResponse response = groupsMapper.toResponse(group);
+            validateGroupMembers(group, member);
 
-            response.setGroupMembers(activeMembers.stream().map(groupsMapper::toResponse).toList());
-
-            return response;
+            return convertToResponse(group);
 
         }catch (BadRequestException e)
         {
@@ -171,7 +160,7 @@ public class GroupsServiceImpl implements GroupsService
         try {
             Page<Groups> groups = groupsRepository.findAllActiveGroupsByMemberId(member.getId().toString(), search, pageable);
 
-            return groups.map(groupsMapper::toResponse);
+            return groups.map(this::convertToResponse);
 
         } catch (Exception e)
         {
@@ -191,20 +180,17 @@ public class GroupsServiceImpl implements GroupsService
 
         try {
 
-            List<GroupMembers> activeMembers = validateGroupMembers(group, member);
+            validateGroupMembers(group, member);
 
             group.setName(request.getName().trim());
             group.setDescription(request.getDescription());
 
             Groups updatedGroup = groupsRepository.save(group);
 
-            GroupResponse response = groupsMapper.toResponse(updatedGroup);
-
-            response.setGroupMembers(activeMembers.stream().map(groupsMapper::toResponse).toList());
-
             log.info("Group updated successfully: {}", updatedGroup.getId());
 
-            return response;
+            return convertToResponse(updatedGroup);
+
         } catch (BadRequestException e)
         {
             log.warn(" error while updating group   {}: {}", group.getId(), e.getMessage());
@@ -362,7 +348,7 @@ public class GroupsServiceImpl implements GroupsService
     private List<GroupMembers> validateGroupMembers(Groups group, Members member)
     {
 
-        List<GroupMembers> activeMembers = groupMembersRepository.findActiveMembersByGroupId(group.getId().toString());
+        List<GroupMembers> activeMembers = groupMembersRepository.findActiveGroupMembers(group.getId().toString());
 
         boolean isMember = activeMembers.stream().anyMatch(groupMember -> groupMember.getMember().getId().equals(member.getId()));
 
@@ -428,6 +414,21 @@ public class GroupsServiceImpl implements GroupsService
         }
 
 
+    }
+
+
+    private GroupResponse convertToResponse(Groups group)
+    {
+
+        GroupResponse response = groupsMapper.toResponse(group);
+
+        List<GroupMembers> activeMembers = groupMembersRepository.findActiveGroupMembers(group.getId().toString());
+
+        List<GroupMembersResponse> memberResponses = activeMembers.stream().map(groupsMapper::toResponse).toList();
+
+        response.setGroupMembers(memberResponses);
+
+        return response;
     }
 
 }

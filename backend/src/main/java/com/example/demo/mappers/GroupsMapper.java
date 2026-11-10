@@ -12,6 +12,7 @@ public interface GroupsMapper
 {
 
     @Mapping(source = "createdBy.id", target = "createdBy")
+    @Mapping(target = "groupMembers", ignore = true)
     GroupResponse toResponse(Groups groups);
 
     @Mapping(source = "member.id", target = "memberId")

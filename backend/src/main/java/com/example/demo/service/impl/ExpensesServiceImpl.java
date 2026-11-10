@@ -183,7 +183,8 @@ public class ExpensesServiceImpl implements ExpensesService
 
             String groupId = group.getId().toString();
 
-            List<GroupMembers> groupMembers = groupMembersRepository.findActiveMembersByGroupId(groupId);
+            List<GroupMembers> groupMembers =
+                    groupMembersRepository.findActiveGroupMembers(group.getId().toString());
 
             List<Expenses> expenses = expensesRepository.getAllExpensesByGroupId(groupId);
 

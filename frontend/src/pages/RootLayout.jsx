@@ -6,11 +6,13 @@ function RootLayout() {
   return (
     
         <>
+
+        <Outlet />
             
-        <Navbar/>
+        {/* <Navbar/>
         <main className="min-vh-100">
-            <Outlet />
-        </main>
+            
+        </main> */}
 
         
         </>

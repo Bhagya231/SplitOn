@@ -61,7 +61,7 @@ function MembersPage()
     async function handleAddExpense(expenseData) 
     {
         try {
-            const response = await api.post("/expense/add", expenseData);
+            const response = await api.post("groups/{groupId}/expense/add", expenseData);
 
             await revalidator.revalidate();
 
@@ -79,7 +79,7 @@ function MembersPage()
     async function handleDeleteExpense(expenseId) 
     {
         try {
-            await api.delete(`/expense/delete/${expenseId}`);
+            await api.delete(`groups/{groupId}/expense/delete/${expenseId}`);
 
             await revalidator.revalidate();
 

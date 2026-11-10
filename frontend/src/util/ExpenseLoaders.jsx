@@ -6,7 +6,7 @@ export async function ExpenseDetailsLoader({ params })
     const id = params.id;
 
     try {
-        const response = await api.get(`/expense/details/${params.id}`);
+        const response = await api.get(`groups/{groupId}/expense/details/${params.id}`);
         return response.data;
     } catch (error) 
     {

@@ -48,8 +48,8 @@ public interface GroupsRepository extends JpaRepository<Groups, UUID>
             FROM expense_groups g
             INNER JOIN group_members gm  ON gm.expense_groups_id = g.id
             WHERE gm.member_id = :memberId
-              AND gm.is_deleted = 0
-              AND g.is_deleted = 0
+              AND gm.is_deleted = false
+              AND g.is_deleted = false
               AND ( :search IS NULL
                   OR :search = ''
                   OR LOWER(g.name) LIKE LOWER(CONCAT('%', :search, '%'))
@@ -60,8 +60,8 @@ public interface GroupsRepository extends JpaRepository<Groups, UUID>
             FROM expense_groups g
             INNER JOIN group_members gm  ON gm.expense_groups_id = g.id
             WHERE gm.member_id = :memberId
-              AND gm.is_deleted = 0
-              AND g.is_deleted = 0
+              AND gm.is_deleted = false
+              AND g.is_deleted = false
               AND (:search IS NULL
                   OR :search = ''
                   OR LOWER(g.name) LIKE LOWER(CONCAT('%', :search, '%'))
