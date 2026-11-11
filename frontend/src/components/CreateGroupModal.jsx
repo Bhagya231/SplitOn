@@ -1,146 +1,185 @@
 
 import { useState } from "react";
-import Select from "react-select";
+import Select, { components } from "react-select";
+import { Check } from "lucide-react";
 import FormInput from "./common/FormInput";
 
-export default function CreateGroupModal({show,onClose, onCreate,members = [],loading = false})
- {
 
+function MemberOption(props) 
+{
+    const { data, isSelected } = props;
+
+    const initials = data.name.split(" ").slice(0, 2).map(word => word.charAt(0)).join("").toUpperCase();
+
+    return (
+        <components.Option {...props}>
+            <div className="d-flex align-items-center justify-content-between">
+                <div className="d-flex align-items-center gap-3">
+                    <div className="rounded-circle d-flex align-items-center justify-content-center fw-bold text-primary bg-primary-subtle"
+                        style={{ width: "40px",height: "40px",flexShrink: 0}}>
+                        {initials}
+                    </div>
+
+                    <div>
+                        <div className="fw-semibold text-dark">
+                            {data.name}
+                        </div>
+                        <small className="text-secondary">
+                            {data.email}
+                        </small>
+                    </div>
+                </div>
+
+                {isSelected && (
+                    <Check size={18} className="text-primary" />
+                )}
+            </div>
+        </components.Option>
+    );
+}
+
+export default function CreateGroupModal({show,onClose,onCreate,members = [],loading = false})
+ {
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [selectedMembers, setSelectedMembers] = useState([]);
-
     const [errors, setErrors] = useState({});
 
+    const memberOptions = members.map(member => ({
+        value: member.id,
+        name: member.name,
+        email: member.email,
+        label: `${member.name} (${member.email})`
+    }));
 
-    
-    const memberOptions = members.map(member => ({value: member.id,label: `${member.name} (${member.email})`}));
-
-
-    function handleSubmit(e) 
+    function resetForm()
     {
+        setName("");
+        setDescription("");
+        setSelectedMembers([]);
+        setErrors({});
+    }
 
+    function handleClose() 
+    {
+        if (loading) 
+        {
+            return;
+        }
+        resetForm();
+        onClose();
+    }
+
+   async function handleSubmit(e) 
+    {
         e.preventDefault();
 
         const validationErrors = {};
 
-    
+        const trimmedName = name.trim();
+        const trimmedDescription = description.trim();
+
+        if (!trimmedName) {
+            validationErrors.name = "Group name is required";
+        } else if (trimmedName.length < 3) {
+            validationErrors.name = "Group name must contain at least 3 characters";
+        } else if (trimmedName.length > 30) {
+            validationErrors.name = "Group name cannot exceed 30 characters";
+        }
+
+        if (!trimmedDescription) {
+            validationErrors.description = "Description is required";
+        } else if (trimmedDescription.length < 5) {
+            validationErrors.description = "Description must contain at least 5 characters";
+        } else if (trimmedDescription.length > 100) {
+            validationErrors.description = "Description cannot exceed 100 characters";
+        }
+
+        if (selectedMembers.length === 0) {
+            validationErrors.members = "Please select at least one member";
+        }
+
+        setErrors(validationErrors);
 
         if (Object.keys(validationErrors).length > 0) {
-            setErrors(validationErrors);
             return;
         }
 
-        
-        const memberIds = [ ...selectedMembers.map(member => member.value)];
-
-        if (currentMember?.id && !memberIds.includes(currentMember.id)) {
-            memberIds.push(currentMember.id);
-        }
-
         const request = {
-            name: name.trim(),
-            description: description.trim(),
-            groupMembers: memberIds.map(memberId => ({
-                memberId
+            name: trimmedName,
+            description: trimmedDescription,
+            groupMembers: selectedMembers.map(member => ({
+                memberId: member.value
             }))
         };
 
-        onCreate(request);
+        const success = await onCreate(request);
+
+        if (success) 
+        {
+            resetForm();
+            onClose();
+        }
     }
 
-
-    if (!show) return null;
-
+    if (!show)
+    {
+       return null; 
+    } 
 
     return (
-
-        <div
-            className="modal fade show d-block"
-            tabIndex="-1"
-            style={{
-                backgroundColor: "rgba(0,0,0,0.5)",
-                zIndex: 1055
-            }}
-            onClick={(e) => {
-                if (e.target === e.currentTarget) onClose();
-            }}
-        >
-
+        <div className="modal fade show d-block" tabIndex="-1" style={{  backgroundColor: "rgba(0,0,0,0.5)",  zIndex: 1055 }}
+            onClick={e => {if (e.target === e.currentTarget) handleClose(); }}>
             <div className="modal-dialog modal-dialog-centered modal-lg">
-
                 <div className="modal-content border-0 shadow rounded-4">
 
-                    {/* Modal Header */}
-
                     <div className="modal-header border-0 px-4 pt-4">
-
                         <div>
                             <h5 className="modal-title fw-bold">
                                 Create New Group
                             </h5>
-
                             <p className="text-secondary small mb-0">
-                                Create a group and add members to start
-                                sharing expenses.
+                                Create a group and invite members to share expenses.
                             </p>
                         </div>
 
-                        <button
-                            type="button"
-                            className="btn-close"
-                            onClick={onClose}
-                            disabled={loading}
-                        />
+                        <button type="button" className="btn-close" onClick={handleClose} disabled={loading}/>
 
                     </div>
 
-
-                    {/* Modal Body */}
-
                     <form onSubmit={handleSubmit}>
-
                         <div className="modal-body px-4">
 
                             <FormInput
                                 label="Group Name"
                                 name="name"
                                 value={name}
-                                onChange={(e) => {
+                                onChange={e => {
                                     setName(e.target.value);
                                     setErrors(prev => ({ ...prev, name: "" }));
                                 }}
-                                placeholder="Enter group name"
+                                placeholder="e.g. Goa Trip, Family, Roommates"
                                 error={errors.name}
                                 required
                             />
-
 
                             <FormInput
                                 label="Description"
                                 name="description"
                                 inputType="textarea"
                                 value={description}
-                                onChange={(e) => {
+                                onChange={e => {
                                     setDescription(e.target.value);
-                                    setErrors(prev => ({
-                                        ...prev,
-                                        description: ""
-                                    }));
-                                }}
-                                placeholder="Enter group description"
+                                    setErrors(prev => ({ ...prev,description: ""}));}}
+                                placeholder="What is this group for?"
                                 rows={3}
                                 error={errors.description}
                                 required
                             />
 
-
-                            
-
                             <div className="mb-3">
-
                                 <label className="form-label fw-semibold">
-                                    Add Members
+                                    Select Group Members
                                     <span className="text-danger ms-1">*</span>
                                 </label>
 
@@ -148,45 +187,55 @@ export default function CreateGroupModal({show,onClose, onCreate,members = [],lo
                                     isMulti
                                     options={memberOptions}
                                     value={selectedMembers}
-                                    onChange={(value) => {
+                                    onChange={value => {
                                         setSelectedMembers(value || []);
-                                        setErrors(prev => ({
-                                            ...prev,
-                                            members: ""
-                                        }));
-                                    }}
-                                    placeholder="Search and select members..."
+                                        setErrors(prev => ({ ...prev, members: "" })); }}
+                                    components={{ Option: MemberOption  }}
+                                    placeholder="Search members by name or email..."
                                     noOptionsMessage={() => "No members found"}
-                                    isClearable
                                     closeMenuOnSelect={false}
+                                    hideSelectedOptions={false}
+                                    isClearable
                                     styles={{
                                         control: (base, state) => ({
                                             ...base,
-                                            minHeight: "42px",
-                                            borderColor: errors.members
-                                                ? "#dc3545"
-                                                : state.isFocused
-                                                    ? "#86b7fe"
-                                                    : "#dee2e6",
-                                            boxShadow: state.isFocused
-                                                ? "0 0 0 0.2rem rgba(13,110,253,.15)"
-                                                : "none",
-                                            "&:hover": {
-                                                borderColor: "#86b7fe"
-                                            }
+                                            minHeight: "48px",
+                                            borderRadius: "8px",
+                                            borderColor: errors.members ? "#dc3545" : state.isFocused ? "#244B9B" : "#dee2e6",    
+                                            boxShadow: state.isFocused  ? "0 0 0 3px rgba(36,75,155,0.12)"  : "none",                                                                                             
+                                            "&:hover": { borderColor: "#244B9B"}
                                         }),
-                                        menu: (base) => ({
+                                        menu: base => ({
                                             ...base,
-                                            zIndex: 1100
+                                            zIndex: 1100,
+                                            borderRadius: "10px",
+                                            overflow: "hidden"
                                         }),
-                                        multiValue: (base) => ({
+                                        option: (base, state) => ({
                                             ...base,
-                                            backgroundColor: "#e7efff",
-                                            borderRadius: "5px"
+                                            padding: "12px",
+                                            backgroundColor: state.isSelected ? "#eaf0ff" : state.isFocused ? "#f5f7fc" : "white",  cursor: "pointer"}),
+                                        multiValue: base => ({
+                                            ...base,
+                                            backgroundColor: "#eaf0ff",
+                                            borderRadius: "6px",
+                                            padding: "2px 4px"
                                         }),
-                                        multiValueLabel: (base) => ({
+                                        multiValueLabel: base => ({
                                             ...base,
-                                            color: "#244B9B"
+                                            color: "#244B9B",
+                                            fontWeight: 600
+                                        }),
+                                        multiValueRemove: base => ({
+                                            ...base,
+                                            color: "#244B9B",
+                                            borderRadius: "4px",
+                                            ":hover": { backgroundColor: "#d5e1ff",  color: "#dc3545"}
+                                        }),
+                                        placeholder: base => ({
+                                            ...base,
+                                            color: "#8a929d",
+                                            fontSize: "14px"
                                         })
                                     }}
                                 />
@@ -197,35 +246,18 @@ export default function CreateGroupModal({show,onClose, onCreate,members = [],lo
                                     </div>
                                 )}
 
-                                <small className="text-secondary">
-                                    You will automatically be included in
-                                    this group.
+                                <small className="text-secondary d-block mt-2">
+                                    Search and select the members you want to add.
                                 </small>
-
                             </div>
-
                         </div>
 
-
-                        {/* Modal Footer */}
-
                         <div className="modal-footer border-0 px-4 pb-4">
-
-                            <button
-                                type="button"
-                                className="btn btn-light px-4"
-                                onClick={onClose}
-                                disabled={loading}
-                            >
+                            <button type="button" className="btn btn-light px-4" onClick={handleClose}  disabled={loading} >
                                 Cancel
                             </button>
 
-                            <button
-                                type="submit"
-                                className="btn text-white px-4"
-                                style={{ backgroundColor: "#244B9B" }}
-                                disabled={loading}
-                            >
+                            <button type="submit" className="btn text-white px-4" style={{ backgroundColor: "#244B9B" }} disabled={loading}  >
                                 {loading ? (
                                     <>
                                         <span className="spinner-border spinner-border-sm me-2" />
@@ -233,22 +265,15 @@ export default function CreateGroupModal({show,onClose, onCreate,members = [],lo
                                     </>
                                 ) : (
                                     <>
-                                        <i className="bi bi-plus-lg me-2"></i>
+                                        <i className="bi bi-plus-lg me-2" />
                                         Create Group
                                     </>
                                 )}
                             </button>
-
                         </div>
-
                     </form>
-
                 </div>
-
             </div>
-
         </div>
-
     );
-
 }

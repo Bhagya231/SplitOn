@@ -12,6 +12,9 @@ import ExpenseDetails from "./pages/ExpenseDetailsPage";
 import { ExpenseDetailsLoader } from "./util/ExpenseLoaders";
 import RegisterPage from "./pages/RegisterPage";
 import { GroupLoader } from "./util/GroupLoader";
+import GroupDetailsPage from "./pages/GroupDetailsPage";
+import { AuthLoader } from "./util/AuthLoader";
+import { GroupDetailsLoader } from "./util/GroupDetailsLoader";
 
 
 import LoginPage from "./pages/LoginPage";
@@ -38,6 +41,7 @@ const router = createBrowserRouter([
             {
                 path: "app",
                 element: <DashboardLayout />,
+                loader: AuthLoader,
                 children: [
                     {
                         index: true,
@@ -46,20 +50,21 @@ const router = createBrowserRouter([
                         HydrateFallback: () => <p>Loading groups...</p>
                     },
                     {
-                        path: "balance",
-                        element: <BalancesPage />,
-                        loader: BalanceLoader
+                        path: "groups/:groupId",
+                        element: <GroupDetailsPage />,
+                        loader: GroupDetailsLoader
                     },
-                    // {
-                    //     path: "groups/:groupId",
-                    //     element: <GroupDetailsPage />,
-                    //     loader: GroupDetailsLoader
-                    // },
-                    {
+                     {
                         path: "expenses/:id",
                         element: <ExpenseDetails />,
                         loader: ExpenseDetailsLoader
-                    }
+                    },
+                    {
+                        path: ":groupId/balance",
+                        element: <BalancesPage />,
+                        loader: BalanceLoader
+                    },                    
+                   
                 ]
             }
         ]

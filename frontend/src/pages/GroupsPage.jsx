@@ -1,13 +1,19 @@
 
 import { useLoaderData } from "react-router-dom";
 
+import { useEffect, useState } from "react";
+import EditGroupModal from "../components/EditGroupModal";
+import DeleteConfirm from "../components/common/DeleteModal";
+import GroupCard from "../components/GroupCard";
+
 import Img from "../assets/loginbg.png";
 import bg from "../assets/membersbg.png"
-import { useState } from "react";
 import FormInput from "../components/common/FormInput";
-import Card from "../components/common/Card";
+import CreateGroupModal from "../components/CreateGroupModal";
+import api from "../util/Api";
 
-import {Plane, Cake, House, Utensils, ShoppingBag, BriefcaseBusiness,Users,Clapperboard,Wallet} from "lucide-react";
+
+
 
    
 
@@ -16,287 +22,419 @@ export default function GroupsPage()
 {
 
     const data = useLoaderData();
-
+  
     const [groups, setGroups] = useState(data.content || []);
-
     const [search, setSearch] = useState("");
 
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [members, setMembers] = useState([]);
+    const [loadingMembers, setLoadingMembers] = useState(false);
+    const [creating, setCreating] = useState(false);
 
-     function getGroupIcon(groupName ="")  
+    const [editingGroup, setEditingGroup] = useState(null);
+    const [updating, setUpdating] = useState(false);
+
+    const [deletingGroup, setDeletingGroup] = useState(null);
+    const [deleting, setDeleting] = useState(false);
+
+    const [errorMessage, setErrorMessage] = useState("");
+
+
+    useEffect(() => {
+        if (!errorMessage) return;
+
+        const timer = setTimeout(() => {
+        setErrorMessage("");
+        }, 4000);
+
+        return () => clearTimeout(timer);
+    }, [errorMessage]);
+
+     function validateGroup({ name, description }) 
+     {
+        const errors = {};
+
+        if (!name.trim()) {
+        errors.name = "Group name is required";
+        } else if (name.trim().length < 3) {
+        errors.name = "Group name must contain at least 3 characters";
+        } else if (name.trim().length > 100) {
+        errors.name = "Group name cannot exceed 100 characters";
+        }
+
+        if (!description.trim()) {
+        errors.description = "Description is required";
+        } else if (description.trim().length < 5) {
+        errors.description = "Description must contain at least 5 characters";
+        } else if (description.trim().length > 500) {
+        errors.description = "Description cannot exceed 500 characters";
+        }
+
+        return errors;
+    }
+
+
+    function handleClearSearch() 
     {
-        const name = groupName.toLowerCase();
+        setSearch("");
+        handleSearch("");
+    }
 
-        if (/trip|travel|vacation|tour/.test(name)) return Plane;
-        if (/birthday|party|celebration/.test(name)) return Cake;
-        if (/home|family|house/.test(name)) return House;
-        if (/food|dinner|lunch|restaurant/.test(name)) return Utensils;
-        if (/shop|shopping/.test(name)) return ShoppingBag;
-        if (/office|work|project/.test(name)) return BriefcaseBusiness;
-        if (/friend/.test(name)) return Users;
-        if (/movie|entertainment/.test(name)) return Clapperboard;
+    
 
-        return Wallet;
-    };
+    async function fetchMembers()
+     {
+        setLoadingMembers(true);
+
+        try {
+            const response = await api.get("/members/getAll");
+
+            
+            setMembers(response.data.content || response.data);
+
+        } catch (error) {
+            console.error("Failed to fetch members", error);
+             setErrorMessage(error.response?.data?.message || "Failed to load members.");
+        } finally {
+            setLoadingMembers(false);
+        }
+    }
+
+    async function handleOpenCreateModal() 
+    {
+        await fetchMembers();
+        setShowCreateModal(true);
+    }
 
 
-    async function handleSearch()
+
+    async function handleCreateGroup(request) {
+        setCreating(true);
+
+        try {
+            const response = await api.post("/groups", request);
+
+            setGroups(prev => [response.data, ...prev]);
+
+            return true;
+
+        } catch (error) {
+            console.error("Failed to create group:",error.response?.data || error.message);
+            setErrorMessage( error.response?.data?.message || "Failed to create group. Please try again." );
+            return false;
+
+        } finally {
+            setCreating(false);
+        }
+    }
+
+
+    async function handleSearch(searchValue = search)
     {
         try {
+            if(!searchValue)
+            {
 
-            const response = await api.get("/groups", {
+                const response = await api.get("/groups", {
                 params: {
-                    search: search.trim(),
+                    search: searchValue.trim(),
                     page: 0,
                     size: 5
                 }
             });
 
-            setGroups(response.data.content);
+            setGroups(response.data.content || []);
+            }
+
+
+
         } catch (error) {
+            setErrorMessage( error.response?.data?.message || "Failed to search the group. Please try again." );
             console.error("Error searching groups:", error);
+
         }
     };
 
+
+    function handleOpenEdit(group) 
+    {
+        setEditingGroup(group);
+    }
+
+ 
+    async function handleUpdateGroup(groupId, request) 
+    {
+        setUpdating(true);
+
+        try {
+            const response = await api.put(`/groups/${groupId}`, request);
+
+            setGroups(previous => previous.map(group => group.id === groupId ? { ...group, ...response.data } : group));
+
+            setErrorMessage("");
+            return true;
+
+        } catch (error) {
+            console.error("Failed to update group:", error);
+            setErrorMessage( error.response?.data?.message || "Failed to update group. Please try again.");
+
+        return false;
+        } finally {
+        setUpdating(false);
+        }
+    }
+
+    function handleOpenDelete(group)
+    {
+        setDeletingGroup(group);
+    }
+
+
+    async function handleDeleteGroup() 
+    {
+        if (!deletingGroup) 
+        {
+            return;
+        }
+
+        setDeleting(true);
+
+        try {
+            await api.delete(`/groups/${deletingGroup.id}`);
+
+            setGroups(previous => previous.filter(group => group.id !== deletingGroup.id) );
+
+            setDeletingGroup(null);
+            setErrorMessage("");
+        } catch (error) {
+        console.error("Failed to delete group:", error);
+        setErrorMessage( error.response?.data?.message || "Failed to delete group. Please try again." );
+
+        } finally {
+        setDeleting(false);
+        }
+    }
+
+       
     return (
-        <div className="container-fluid  py-2" 
-                style={{
-                    backgroundImage: `url(${bg})`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                    backgroundRepeat: "no-repeat",
-                  }}>
+        <div className="container-fluid py-2 px-0"
+            style={{
+            backgroundImage: `url(${bg})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+            }} >
 
             
-            <div className="rounded-4 overflow-hidden mb-4 mx-3 my-2"
+            <div  className="rounded-4 overflow-hidden mb-3 mx-3 my-2"
                 style={{
                     minHeight: "180px",
                     backgroundImage: `url(${Img})`,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
-                    position: "relative"
-                }}
-            >
-                <div className="h-100 d-flex flex-column justify-content-center p-4 p-md-5"
-                    style={{
-                        minHeight: "180px",
-                        background: "linear-gradient(90deg, rgba(15,35,75,0.85), rgba(15,35,75,0.15))"
-                    }}>
-                    <h1 className="fw-bold text-white mb-2">
-                        My Groups
-                    </h1>
+                    position: "relative",
+                }}>
 
-                    <p className="text-white mb-0">
-                        Manage your groups and keep all your shared expenses
-                        organized in one place.
-                    </p>
-                </div>
-            </div>
+                <div  className="h-100 d-flex flex-column justify-content-center p-4 p-md-5"
+                    style={{ minHeight: "180px",  background:"linear-gradient(90deg, rgba(15,35,75,0.85), rgba(15,35,75,0.15))",  }} >
+                    <div className="mb-4">
+                        <h1 className="fw-bold text-white mb-2">
+                             My Groups
+                        </h1>
 
-
-        
-            <div className="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-3 mx-3">
-
-                <div className="d-flex flex-grow-1 flex-column flex-sm-row align-items-sm-start gap-2">
-
-                     <div className="flex-grow-1" style={{ maxWidth: "650px" }}>
-                        <FormInput
-                            name="search"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Search groups by name..."
-                        />
+                        <p className="text-white mb-0">
+                            Manage your groups and keep all your shared expenses organized in one place.
+                        </p>
                     </div>
 
-                    <button type="button" className="btn text-white px-4"   
-                        style={{
-                            backgroundColor: "#244B9B",
-                            height: "38px",
-                            whiteSpace: "nowrap"
-                        }}
-                        onClick={handleSearch}
-                    >
-                        <i className="bi bi-search me-2"></i>
-                        Search
-                    </button>
+                    <div className="mx-3 ">
+                        <div className="row g-3 align-items-start">
 
+                
+                            <div className="">
+                                <div className="row g-2 align-items-start">
+
+                                    <div className="col-6">
+                                    <FormInput
+                                        name="search"
+                                        value={search}
+                                        onChange={(e) => setSearch(e.target.value)}
+                                        placeholder="Search groups by name..."
+                                    />
+                                    </div>
+
+                                    <div className="col-auto">
+                                        <button type="button" className="btn text-white px-3"
+                                            style={{
+                                            backgroundColor: "#244B9B",
+                                            minHeight: "38px",
+                                            whiteSpace: "nowrap",
+                                            }}
+                                            onClick={handleSearch} >
+                                            <i className="bi bi-search me-2"></i>
+                                            Search
+                                        </button>
+                                    </div>
+
+                                    <div className="col-auto">
+
+                                         <button type="button" className="btn  text-white px-3"
+                                            style={{
+                                            backgroundColor: "#244B9B",
+                                            minHeight: "38px",
+                                            whiteSpace: "nowrap",
+                                            }}
+                                            onClick={handleClearSearch}  disabled={!search.trim()}>
+                                            
+                                            Clear
+                                        </button>
+                                       
+                                    </div>
+
+                                </div>
+                            </div>
+
+                                
+                            
+
+                        </div>
+                    </div>
                 </div>
-
-                <div>
-                    <button
-                        type="button"
-                        className="btn text-white px-4 w-100 w-lg-auto"
-                        style={{
-                            backgroundColor: "#244B9B",
-                            minHeight: "38px",
-                            whiteSpace: "nowrap"
-                        }}
-                    >
-                        <i className="bi bi-plus-lg me-2"></i>
-                        Create Group
-                    </button>
-                </div>
-
             </div>
 
+           
+            {errorMessage && (
+            <div className="alert alert-danger alert-dismissible fade show mx-3" role="alert" >
+                <i className="bi bi-exclamation-circle me-2"></i>
+                {errorMessage}
 
-            <div className="mb-3 mx-3">
+                <button type="button" className="btn-close" onClick={() => setErrorMessage("")} aria-label="Close" />
+            </div>
+            )}
+
+
+            {/* <div className="mb-3 mx-3">
+                <div>
+                    <h4
+                    className="fw-bold mb-1"
+                    style={{ color: "#172D62" }}
+                    >
+                    Your Groups
+                    </h4>
+
+                    <p className="text-secondary mb-0">
+                    Manage all your groups in one place.
+                    </p>
+                </div>
+            </div> */}
+
+            
+            
+
+            
+
+
+            
+            <div className="row mx-2 my-2 g-4">
+
+                <div className="d-flex justify-content-between align-items-center me-3 ">
+                <div>
+                    <h5 className="mb-1">Groups</h5>
+                    <p className="text-muted mb-0">
+                        Select a Groups to view.
+                    </p>
+                </div>
 
                 
 
-                    <div>
-                        <h4 className="fw-bold mb-1" style={{ color: "#172D62" }} >
-                            Your Groups
-                        </h4>
+                 <button type="button" className="btn text-white "  
+                                    style={{
+                                    backgroundColor: "#244B9B",
+                                    minHeight: "38px",
+                                    whiteSpace: "nowrap",
+                                    }}
+                                    onClick={handleOpenCreateModal}
+                                    disabled={loadingMembers}
+                                >
+                                    {loadingMembers ? (
+                                    <>
+                                        <span className="spinner-border spinner-border-sm me-2"></span>
+                                        Loading...
+                                    </>
+                                    ) : (
+                                    <>
+                                        <i className="bi bi-plus-lg "></i>
+                                        
+                                    </>
+                                    )}
+                                </button>
+            </div>
 
-                        <p className="text-secondary mb-0">
-                            Manage all your groups in one place.
-                        </p>
-                    </div> 
+              
 
-            
+            {groups && groups.length > 0 ? ( groups.map((group) => (
+
+                <div  className="col-12 col-md-4 col-lg-3" key={group.id} >
+                    <GroupCard
+                    group={group}
+                    onEdit={handleOpenEdit}
+                    onDelete={handleOpenDelete}
+                    />
+                </div>
+                ))
+            ) : (
+                <div className="col-12 text-center py-5">
+                <i className="bi bi-people fs-1 text-secondary"></i>
+
+                <h5 className="mt-3 fw-bold">
+                    No Groups Found
+                </h5>
+
+                <p className="text-secondary">
+                    Create a group to start sharing expenses.
+                </p>
+
+                <button type="button" className="btn text-white px-4" style={{ backgroundColor: "#244B9B" }} onClick={handleOpenCreateModal}>
+                    <i className="bi bi-plus-lg me-2"></i>
+                    Create Your First Group
+                </button>
+                </div>
+            )}
 
             </div>
 
+            
+            <CreateGroupModal
+                show={showCreateModal}
+                onClose={() => setShowCreateModal(false)}
+                members={members}
+                onCreate={handleCreateGroup}
+                loading={creating || loadingMembers}
+            />
+
+           
+            <EditGroupModal
+                show={Boolean(editingGroup)}
+                group={editingGroup}
+                onClose={() => setEditingGroup(null)}
+                onUpdate={handleUpdateGroup}
+                loading={updating}
+                validateGroup={validateGroup}
+            />
 
             
-            <div className="row mx-3 my-5">
+            <DeleteConfirm
+                show={Boolean(deletingGroup)}
+                title="Delete Group"
+                itemName={deletingGroup?.name}
+                message="Are you sure you want to delete this group? "
+                onCancel={() => setDeletingGroup(null)}
+                onConfirm={handleDeleteGroup}
+                loading={deleting}
+            />
 
-                        {groups && groups.length > 0 ? (
-                            groups.map((group) => (
-
-                                <div className="col-12 col-md-6 col-lg-4" key={group.id}>
-
-                                    <Card className="h-100">
-
-                                    
-
-                                       
-                                        <div className="d-flex justify-content-between align-items-start mb-3">
-
-                                            <div>
-                                                <h5 className="fw-bold mb-1 text-dark">
-                                                    {group.name}
-                                                </h5>
-
-                                                <p className="text-secondary small mb-0">
-                                                    {group.description}
-                                                </p>
-                                            </div>
-
-                                            <button type="button" className="btn btn-light btn-sm" title="Group options" >
-                                                <i className="bi bi-three-dots-vertical"></i>
-                                            </button>
-
-                                        </div>
-
-                                        
-                                        <div className="d-flex align-items-center">
-                                            <div className="d-flex align-items-center">
-                                                {group.groupMembers?.slice(0, 4).map((item, index) => {
-                                                    const name = item.memberName || "";
-
-                                                    return (
-                                                        <div
-                                                            key={item.id}
-                                                            title={name}
-                                                            className="rounded-circle d-flex align-items-center justify-content-center fw-bold text-primary bg-primary-subtle border border-2 border-white"
-                                                            style={{
-                                                                width: "36px",
-                                                                height: "36px",
-                                                                marginLeft: index === 0 ? "0" : "-12px",
-                                                                zIndex: 4 - index,
-                                                                fontSize: "13px",
-                                                                cursor: "pointer"
-                                                            }}
-                                                        >
-                                                            {name.charAt(0).toUpperCase()}
-                                                        </div>
-                                                    );
-                                                })}
-
-                                                {group.groupMembers?.length > 4 && (
-                                                    <div
-                                                        className="rounded-circle d-flex align-items-center justify-content-center bg-secondary-subtle text-secondary border border-2 border-white fw-semibold"
-                                                        style={{
-                                                            width: "36px",
-                                                            height: "36px",
-                                                            marginLeft: "-12px",
-                                                            zIndex: 0,
-                                                            fontSize: "12px"
-                                                        }}
-                                                    >
-                                                        +{group.groupMembers.length - 4}
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            <span className="text-secondary small ms-2">
-                                                {group.groupMembers?.length || 0} Members
-                                            </span>
-                                        </div>
-
-                                        
-                                        <div className="d-flex justify-content-between align-items-center border-top pt-3">
-
-                                            <small className="text-secondary">
-                                                Created: {group.createdAt ? new Date(group.createdAt).toLocaleDateString(): "-"}                                                    
-                                            </small>
-
-                                            <button type="button" className="btn btn-primary btn-sm">
-                                                Open Group
-                                                <i className="bi bi-arrow-right ms-2"></i>
-                                            </button>
-
-                                        </div>
-
-                                    </Card>
-
-                                </div>
-
-                            ))
-                        ) : (
-                            <div className="col-12 text-center py-5">
-                                <i className="bi bi-people fs-1 text-secondary"></i>
-                                <h5 className="mt-3">No Groups Found</h5>
-                                <p className="text-secondary">
-                                    Create a group to start sharing expenses.
-                                </p>
-
-
-                                {/* <div className="col-12 text-center py-4">
-
-                                    <img
-                                        src="/images/no-groups.png"
-                                        alt="No groups found"
-                                        className="img-fluid mb-3"
-                                        style={{ maxWidth: "280px", maxHeight: "200px" }}
-                                    />
-
-                                    <h5 className="fw-bold text-dark">
-                                        No Groups Found
-                                    </h5>
-
-                                    <p className="text-secondary mb-3">
-                                        You haven't joined any groups yet.
-                                        Create your first group and start sharing expenses!
-                                    </p>
-
-                                    <button className="btn btn-primary px-4">
-                                        <i className="bi bi-plus-lg me-2"></i>
-                                        Create Your First Group
-                                    </button>
-
-                                </div> */}
-                            </div>
-                        )}
-
-                    </div>
-
-
-
-
-
-
-    </div>
+        </div>
     );
+
+    
 }

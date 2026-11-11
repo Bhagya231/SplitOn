@@ -1,15 +1,18 @@
 import { useState, useEffect } from "react";
-import { Form, Link, useNavigate} from "react-router-dom";
+import { Form, Link, useNavigate, useLocation} from "react-router-dom";
 
 import FormInput from "../components/common/FormInput";
 import Img from "../assets/loginbg.png";
 import api from "../util/Api";
 import { Card } from "react-bootstrap";
 
+import ToastMessage from "../components/common/ToastMessage";
+
 function LoginPage() 
 {
   
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState("");
@@ -31,6 +34,20 @@ function LoginPage()
       return () => clearTimeout(timer);
     }, [serverError]);
     
+
+    const [toast, setToast] = useState(null);
+
+  useEffect(() => {
+      if (location.state?.toast) {
+          setToast(location.state.toast);
+
+         
+          navigate(location.pathname, {
+              replace: true,
+              state: null
+          });
+      }
+  }, [location, navigate]);
 
   function handleFieldChange(fieldName, value) 
   {
@@ -235,6 +252,13 @@ function LoginPage()
         
 
       </div>
+
+      <ToastMessage
+          show={!!toast}
+          message={toast?.message || ""}
+          type={toast?.type || "success"}
+          onClose={() => setToast(null)}
+      />
       </div>
       
     
