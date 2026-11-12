@@ -121,7 +121,28 @@ export function validateRegisterForm(formData)
 
 
 
+    export function validateGroup({ name, description }) 
+     {
+        const errors = {};
 
+        if (!name.trim()) {
+        errors.name = "Group name is required";
+        } else if (name.trim().length < 3) {
+        errors.name = "Group name must contain at least 3 characters";
+        } else if (name.trim().length > 100) {
+        errors.name = "Group name cannot exceed 100 characters";
+        }
+
+        if (!description.trim()) {
+        errors.description = "Description is required";
+        } else if (description.trim().length < 5) {
+        errors.description = "Description must contain at least 5 characters";
+        } else if (description.trim().length > 500) {
+        errors.description = "Description cannot exceed 500 characters";
+        }
+
+        return errors;
+    }
 
 
 

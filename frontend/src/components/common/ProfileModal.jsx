@@ -24,7 +24,7 @@ export default function ProfileModal({ show, onClose, member })
         <Modal  show={show}  onHide={onClose}  centered size="md" backdrop="static" contentClassName="border-0 rounded-4 overflow-hidden shadow">           
 
            
-            <div className="bg-dark text-white text-center p-4 position-relative">
+            <div className=" text-white text-center p-4 position-relative" style={{ backgroundColor: "#062169" }}>
 
                 <button type="button" className="btn-close btn-close-white position-absolute top-0 end-0 m-3" onClick={onClose}/>
 

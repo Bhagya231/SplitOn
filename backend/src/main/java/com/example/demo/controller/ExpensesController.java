@@ -51,7 +51,7 @@ public class ExpensesController
     }
 
     @GetMapping
-    public ResponseEntity<Page<ExpensesResponse>> getAllExpenses(@PathVariable UUID groupId, @RequestParam(required = false) String search, @PageableDefault(size = 5) Pageable pageable)
+    public ResponseEntity<Page<ExpensesResponse>> getAllExpenses(@PathVariable UUID groupId, @RequestParam(required = false) String search, @PageableDefault(size = 5,page = 0) Pageable pageable)
     {
 
         try {

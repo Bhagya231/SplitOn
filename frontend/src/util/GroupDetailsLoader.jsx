@@ -1,15 +1,21 @@
 import api from "./Api";
 
-export async function GroupDetailsLoader({ params }) 
+export async function GroupDetailsLoader({ params, request }) 
 {
-    const groupId = params.groupId;
+        const groupId = params.groupId;
+
+        const url = new URL(request.url);
+
+        const search = url.searchParams.get("search") || "";
+        const page = Number(url.searchParams.get("page") || 0);
 
     try {
         const [groupResponse, expenseResponse] = await Promise.all([
             api.get(`/groups/${groupId}`),
             api.get(`/groups/${groupId}/expenses`, {
                 params: {
-                    page: 0,
+                    search,
+                    page,
                     size: 5
                 }
             })
@@ -21,7 +27,8 @@ export async function GroupDetailsLoader({ params })
         return {
             group: groupResponse.data,
             expenses: expenseResponse.data.content || [],
-            expensePage: expenseResponse.data
+            expensePage: expenseResponse.data,
+            search
         };
 
     } catch (error) {

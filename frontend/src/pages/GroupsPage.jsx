@@ -1,5 +1,5 @@
 
-import { useLoaderData } from "react-router-dom";
+import { useLoaderData, useSearchParams } from "react-router-dom";
 
 import { useEffect, useState } from "react";
 import EditGroupModal from "../components/EditGroupModal";
@@ -8,7 +8,6 @@ import GroupCard from "../components/GroupCard";
 
 import Img from "../assets/loginbg.png";
 import bg from "../assets/membersbg.png"
-import FormInput from "../components/common/FormInput";
 import CreateGroupModal from "../components/CreateGroupModal";
 import api from "../util/Api";
 
@@ -22,9 +21,18 @@ export default function GroupsPage()
 {
 
     const data = useLoaderData();
-  
+
+    const [searchParams, setSearchParams] = useSearchParams();
+    
+    const PAGE_SIZE = 8;
+
     const [groups, setGroups] = useState(data.content || []);
-    const [search, setSearch] = useState("");
+    const [search, setSearch] = useState(searchParams.get("search") || "");
+
+    const [totalPages, setTotalPages] = useState(data.totalPages || 0);
+    const [totalElements, setTotalElements] = useState(data.totalElements || 0);
+
+    const currentPage = data.number || 0;
 
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [members, setMembers] = useState([]);
@@ -40,6 +48,8 @@ export default function GroupsPage()
     const [errorMessage, setErrorMessage] = useState("");
 
 
+
+
     useEffect(() => {
         if (!errorMessage) return;
 
@@ -49,6 +59,18 @@ export default function GroupsPage()
 
         return () => clearTimeout(timer);
     }, [errorMessage]);
+
+
+    useEffect(() => {
+        setGroups(data.content || []);
+        setTotalPages(data.totalPages || 0);
+        setTotalElements(data.totalElements || 0);
+    }, [data]);
+
+
+    useEffect(() => {
+        setSearch(searchParams.get("search") || "");
+    }, [searchParams]);
 
      function validateGroup({ name, description }) 
      {
@@ -77,9 +99,44 @@ export default function GroupsPage()
     function handleClearSearch() 
     {
         setSearch("");
-        handleSearch("");
+
+         setSearchParams({
+            page: "0",
+            size: String(PAGE_SIZE)
+        });
     }
 
+
+     function handleSearch() 
+     {
+
+        const params = new URLSearchParams();
+
+        if (search.trim()) 
+        {
+            params.set("search", search.trim());
+        }
+
+        params.set("page", 0);
+        params.set("size", PAGE_SIZE);
+
+        setSearchParams(params);
+    }
+
+    function handlePageChange(pageNumber) {
+
+        if (pageNumber < 0 || pageNumber >= totalPages) {
+            return;
+        }
+
+        const params = new URLSearchParams(searchParams);
+
+        params.set("page", String(pageNumber));
+        params.set("size", String(PAGE_SIZE));
+
+        setSearchParams(params);
+    }
+    
     
 
     async function fetchMembers()
@@ -109,51 +166,52 @@ export default function GroupsPage()
 
 
     async function handleCreateGroup(request) {
-        setCreating(true);
 
-        try {
-            const response = await api.post("/groups", request);
+    setCreating(true);
 
-            setGroups(prev => [response.data, ...prev]);
+    try {
 
-            return true;
+        const response = await api.post("/groups", request);
 
-        } catch (error) {
-            console.error("Failed to create group:",error.response?.data || error.message);
-            setErrorMessage( error.response?.data?.message || "Failed to create group. Please try again." );
-            return false;
+        const newGroup = response.data;
 
-        } finally {
-            setCreating(false);
+        const matchesSearch =
+            !search.trim() ||
+            newGroup.name?.toLowerCase().includes(search.trim().toLowerCase());
+
+        if (currentPage === 0 && matchesSearch) {
+
+            setGroups(previous => [
+                newGroup,
+                ...previous
+            ].slice(0, PAGE_SIZE));
+
+            const updatedTotal = totalElements + 1;
+
+            setTotalElements(updatedTotal);
+            setTotalPages(Math.ceil(updatedTotal / PAGE_SIZE));
         }
+
+        setShowCreateModal(false);
+        setErrorMessage("");
+
+        return true;
+
+    } catch (error) {
+
+        console.error("Failed to create group:", error.response?.data || error.message);
+
+        setErrorMessage(
+            error.response?.data?.message ||
+            "Failed to create group. Please try again."
+        );
+
+        return false;
+
+    } finally {
+        setCreating(false);
     }
-
-
-    async function handleSearch(searchValue = search)
-    {
-        try {
-            if(!searchValue)
-            {
-
-                const response = await api.get("/groups", {
-                params: {
-                    search: searchValue.trim(),
-                    page: 0,
-                    size: 5
-                }
-            });
-
-            setGroups(response.data.content || []);
-            }
-
-
-
-        } catch (error) {
-            setErrorMessage( error.response?.data?.message || "Failed to search the group. Please try again." );
-            console.error("Error searching groups:", error);
-
-        }
-    };
+}
 
 
     function handleOpenEdit(group) 
@@ -190,28 +248,52 @@ export default function GroupsPage()
     }
 
 
-    async function handleDeleteGroup() 
-    {
-        if (!deletingGroup) 
-        {
+    async function handleDeleteGroup() {
+
+        if (!deletingGroup) {
             return;
         }
 
         setDeleting(true);
 
         try {
+
             await api.delete(`/groups/${deletingGroup.id}`);
 
-            setGroups(previous => previous.filter(group => group.id !== deletingGroup.id) );
+            const updatedTotal = Math.max(0, totalElements - 1);
+            const updatedPages = Math.ceil(updatedTotal / PAGE_SIZE);
+
+            setTotalElements(updatedTotal);
+            setTotalPages(updatedPages);
+
+            setGroups(previous =>
+                previous.filter(group => group.id !== deletingGroup.id)
+            );
 
             setDeletingGroup(null);
             setErrorMessage("");
+
+            // If the current page no longer exists, go to the previous page.
+            if (currentPage >= updatedPages && currentPage > 0) {
+
+                const params = new URLSearchParams(searchParams);
+
+                params.set("page", String(updatedPages - 1));
+
+                setSearchParams(params);
+            }
+
         } catch (error) {
-        console.error("Failed to delete group:", error);
-        setErrorMessage( error.response?.data?.message || "Failed to delete group. Please try again." );
+
+            console.error("Failed to delete group:", error);
+
+            setErrorMessage(
+                error.response?.data?.message ||
+                "Failed to delete group. Please try again."
+            );
 
         } finally {
-        setDeleting(false);
+            setDeleting(false);
         }
     }
 
@@ -226,7 +308,7 @@ export default function GroupsPage()
             }} >
 
             
-            <div  className="rounded-4 overflow-hidden mb-3 mx-3 my-2"
+            <div  className="rounded-4 overflow-hidden mb-3 mx-3 my-1"
                 style={{
                     minHeight: "180px",
                     backgroundImage: `url(${Img})`,
@@ -247,58 +329,108 @@ export default function GroupsPage()
                         </p>
                     </div>
 
-                    <div className="mx-3 ">
-                        <div className="row g-3 align-items-start">
+                    
+                    <div className="mx-3 mt-3">
+                        <div className="row g-3 align-items-center">
 
-                
-                            <div className="">
-                                <div className="row g-2 align-items-start">
+                            
 
-                                    <div className="col-6">
-                                    <FormInput
-                                        name="search"
-                                        value={search}
-                                        onChange={(e) => setSearch(e.target.value)}
-                                        placeholder="Search groups by name..."
-                                    />
-                                    </div>
+                            
+                            <div className="col-12 col-lg-8">
+                                <form onSubmit={(e) => {
+                                    e.preventDefault();
+                                    handleSearch();
+                                }}>
+                                    <div
+                                        className="input-group rounded-pill overflow-hidden bg-white"
+                                        style={{
+                                            border: "1px solid #ced4da",
+                                            minHeight: "46px"
+                                        }}
+                                    >
+                                        <input
+                                            type="text"
+                                            className="form-control border-0 shadow-none ps-4"
+                                            value={search}
+                                            onChange={(e) => setSearch(e.target.value)}
+                                            placeholder="Search groups by name..."
+                                        />
 
-                                    <div className="col-auto">
-                                        <button type="button" className="btn text-white px-3"
+                                        
+                                        {search.trim() && (
+                                            <button
+                                                type="button"
+                                                className="btn bg-white border-0 px-2"
+                                                onClick={handleClearSearch}
+                                                title="Clear search"
+                                            >
+                                                <i className="bi bi-x-circle text-secondary"></i>
+                                            </button>
+                                        )}
+
+                                        
+                                        <button
+                                            type="submit"
+                                            className="btn text-white px-3 rounded-pill m-1"
                                             style={{
-                                            backgroundColor: "#244B9B",
-                                            minHeight: "38px",
-                                            whiteSpace: "nowrap",
+                                                backgroundColor: "#244B9B"
                                             }}
-                                            onClick={handleSearch} >
-                                            <i className="bi bi-search me-2"></i>
-                                            Search
-                                        </button>
-                                    </div>
-
-                                    <div className="col-auto">
-
-                                         <button type="button" className="btn  text-white px-3"
-                                            style={{
-                                            backgroundColor: "#244B9B",
-                                            minHeight: "38px",
-                                            whiteSpace: "nowrap",
-                                            }}
-                                            onClick={handleClearSearch}  disabled={!search.trim()}>
                                             
-                                            Clear
+                                            title="Search groups"
+                                        >
+                                            <i className="bi bi-search me-1"></i>
+                                        
                                         </button>
-                                       
                                     </div>
-
-                                </div>
+                                </form>
                             </div>
 
-                                
-                            
+                        
+                            <div className="col-12 col-lg-4 d-flex justify-content-lg-end">
+                                <button
+                                    type="button"
+                                    className="btn text-white rounded-pill px-4"
+                                    style={{
+                                        backgroundColor: "#244B9B",
+                                        minHeight: "46px"
+                                    }}
+                                    onClick={handleOpenCreateModal}
+                                    disabled={loadingMembers}
+                                >
+                                    {loadingMembers ? (
+                                        <>
+                                            <span className="spinner-border spinner-border-sm me-2"></span>
+                                            Loading...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <i className="bi bi-plus-lg me-2"></i>
+                                            Create Group
+                                        </>
+                                    )}
+                                </button>
+                            </div>
 
                         </div>
                     </div>
+                                    
+
+                    
+                    
+
+                    <div className="d-flex justify-content-between align-items-center me-3 ">
+                        <div className="mt-3">
+                  
+                                <p className="text-light mb-0">
+                                    Total Groups: {totalElements}
+                                </p>
+                        </div>
+
+                
+
+                
+                    </div>
+
                 </div>
             </div>
 
@@ -337,38 +469,6 @@ export default function GroupsPage()
             
             <div className="row mx-2 my-2 g-4">
 
-                <div className="d-flex justify-content-between align-items-center me-3 ">
-                <div>
-                    <h5 className="mb-1">Groups</h5>
-                    <p className="text-muted mb-0">
-                        Select a Groups to view.
-                    </p>
-                </div>
-
-                
-
-                 <button type="button" className="btn text-white "  
-                                    style={{
-                                    backgroundColor: "#244B9B",
-                                    minHeight: "38px",
-                                    whiteSpace: "nowrap",
-                                    }}
-                                    onClick={handleOpenCreateModal}
-                                    disabled={loadingMembers}
-                                >
-                                    {loadingMembers ? (
-                                    <>
-                                        <span className="spinner-border spinner-border-sm me-2"></span>
-                                        Loading...
-                                    </>
-                                    ) : (
-                                    <>
-                                        <i className="bi bi-plus-lg "></i>
-                                        
-                                    </>
-                                    )}
-                                </button>
-            </div>
 
               
 
@@ -402,6 +502,56 @@ export default function GroupsPage()
             )}
 
             </div>
+
+
+            {totalPages > 0 && (
+
+                <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mx-3 my-4 gap-3">
+
+                    <p className="text-secondary mb-0">
+                        Page {currentPage + 1} of {Math.max(totalPages, 1)}
+                    </p>
+
+                     <nav aria-label="Group pagination">
+
+                        <ul className="pagination mb-0">
+
+                            <li className={`page-item ${data.first ? "disabled" : ""}`}>
+
+                                <button className="page-link" disabled={data.first} onClick={() => handlePageChange(currentPage - 1)}>
+                                    Previous
+                                </button>
+
+                            </li>
+
+
+                            {Array.from({ length: totalPages },(_, index) => (
+                                    <li key={index} className={`page-item ${currentPage === index ? "active" : ""}`}  >
+
+                                        <button  className="page-link" onClick={() => handlePageChange(index)} >
+                                            {index + 1}
+                                        </button>
+
+                                    </li>
+
+                                )
+                            )}
+
+
+                            <li className={`page-item ${data.last ? "disabled" : ""}`}>
+
+                                <button className="page-link" disabled={data.last} onClick={() => handlePageChange(currentPage + 1)} >
+                                    Next
+                                </button>
+
+                            </li>
+
+                        </ul>
+
+                    </nav>
+
+                </div>
+            )}
 
             
             <CreateGroupModal
