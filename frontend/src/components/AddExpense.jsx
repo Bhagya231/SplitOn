@@ -8,6 +8,7 @@ import { validateExpense } from "../util/validations";
 
 
 
+
 function AddExpense({members=[], expense = null, onAddExpense, onEditExpense,onCancel})
 {
 
@@ -23,9 +24,7 @@ function AddExpense({members=[], expense = null, onAddExpense, onEditExpense,onC
     const [errorMessage, setErrorMessage] = useState("");
     const [submitting, setSubmitting] = useState(false);
 
-
-     const memberOptions = members.map((member) => ({value: member.id,label: member.name, }));
-
+const memberOptions = members.map((member) => ({ value: member.memberId, label: member.memberName,}));
      function handleChange(event)
      {
         const {name, value }= event.target;
@@ -87,29 +86,24 @@ function AddExpense({members=[], expense = null, onAddExpense, onEditExpense,onC
             amount: String(expense.amount ?? ""),
             date: expense.date ? expense.date.slice(0, 10) : "",
         });
+        
 
         setPayer(
-            members.find((member) => member.id === expense.payerId)
-            ? {
-                value: expense.payerId,
-                label: members.find(
-                    (member) => member.id === expense.payerId
-                ).name,
+            members.find((member) => member.memberId === expense.payerId)
+                ? {
+                    value: expense.payerId,
+                    label: members.find(
+                        (member) => member.memberId === expense.payerId
+                    ).memberName,
                 }
-            : null
+                : null
         );
 
         const selected = (expense.splitMembers ?? [])
             .map((splitMember) => {
-            const member = members.find(
-                (item) => item.id === splitMember.id
-            );
+           const member = members.find((item) => item.memberId === splitMember.id);
 
-            return member
-                ? { value: member.id, label: member.name }
-                : null;
-            })
-            .filter(Boolean);
+        return member ? { value: member.memberId, label: member.memberName,}: null;}).filter(Boolean);
 
         setSelectedMember(selected);
         setSplitType(expense.splitType ?? "EQUAL");
@@ -134,24 +128,25 @@ function AddExpense({members=[], expense = null, onAddExpense, onEditExpense,onC
             return;
         }
 
-        const expenseData = {
-            title: form.title,
-            amount: form.amount,
-            date: form.date,
-            payerId: payer?.value || "",
-            splitType,
-            splitMembers: selectedMember.map((member) => {
-            if (splitType === "EQUAL") {
-                return { id: member.value };
-            }
-
+       const expenseData = {
+    title: form.title,
+    amount: form.amount,
+    date: form.date,
+    payerId: payer?.value || "",
+    splitType,
+    splitMembers: selectedMember.map((member) => {
+        if (splitType === "EQUAL") {
             return {
                 id: member.value,
-                percentage: Number(percentages[member.percentage]),
             };
-            }),
-        };
+        }
 
+        return {
+            id: member.value,
+            percentage: Number(percentages[member.value]),
+        };
+    }),
+};
         const validationErrors = validateExpense(expenseData);
         setErrors(validationErrors);
         setErrorMessage("");
@@ -231,6 +226,7 @@ function AddExpense({members=[], expense = null, onAddExpense, onEditExpense,onC
                         name="date"
                         type="date"
                         value={form.date}
+                        max={new Date().toLocaleDateString("en-CA")}
                         onChange={handleChange}
                         required
                         error={errors.date}

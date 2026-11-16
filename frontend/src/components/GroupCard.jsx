@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getGroupVisual } from "../util/getGroupVisual";
+import Button from "./common/Button";
+import { CalendarDays } from "lucide-react"
 
 export default function GroupCard({ group, onEdit, onDelete }) 
 {
@@ -128,16 +130,17 @@ export default function GroupCard({ group, onEdit, onDelete })
         <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 border-top pt-3 mt-3">
 
             <small className="text-secondary">
-                Created:{" "}
+                <CalendarDays size={16} className="mb-1" /> {" "}
+                Created On: {" "}
                 {formatDate(group.createdAt)}
-                {/* {group.createdAt ? new Date(group.createdAt).toLocaleDateString() : "-"} */}
+                
             </small>
 
-            <button type="button"  className="btn btn-primary btn-sm"
+            <Button  variant="primary" size="small" 
                 onClick={(e) => {  e.stopPropagation(); handleOpenGroup(); }} >
-                View Group
+                View 
                 <i className="bi bi-arrow-right ms-2" />
-            </button>
+            </Button>
 
         </div>
       </div>

@@ -22,6 +22,8 @@ public class ExpensesResponse
     private UUID payerId;
     private String payerName;
 
+    private UUID groupId;
+
     private SplitType splitType;
 
     private List<SplitMemberResponse> splitMembers;

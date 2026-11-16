@@ -16,5 +16,6 @@ public class MemberResponse
     private UUID id;
     private String email;
     private String name;
+    private String phone;
 
 }

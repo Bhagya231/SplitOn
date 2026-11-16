@@ -7,6 +7,8 @@ import team from "../assets/office-team.png";
 import road from "../assets/road-trip.png";
 import college from "../assets/college-friends.png";
 import w from "../assets/w.png"
+import food from "../assets/food.png"
+
 
 const groupVisuals = [
     {
@@ -54,7 +56,7 @@ const groupVisuals = [
     {
         keywords: ["food", "dinner", "lunch", "restaurant"],
         icon: Utensils,
-        image: w,
+        image: food,
         bg: "bg-warning-subtle",
         color: "text-warning"
     },

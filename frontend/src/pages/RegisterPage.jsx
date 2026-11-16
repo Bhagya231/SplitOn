@@ -131,6 +131,19 @@ function RegisterPage() {
 
                     <div className="col-12 col-md-6">
                       <FormInput
+                        label="Phone number"
+                        name="phone"
+                        type="tel"
+                        placeholder="10-digit phone number"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        error={errors.phone}
+                        required
+                      />
+                    </div>
+
+                    <div className="col-12">
+                      <FormInput
                         label="Email address"
                         name="email"
                         type="email"
@@ -142,18 +155,7 @@ function RegisterPage() {
                       />
                     </div>
 
-                    <div className="col-12 col-md-6">
-                      <FormInput
-                        label="Phone number"
-                        name="phone"
-                        type="tel"
-                        placeholder="10-digit phone number"
-                        value={formData.phone}
-                        onChange={handleChange}
-                        error={errors.phone}
-                        required
-                      />
-                    </div>
+                    
 
 
                     <div className="col-12 col-md-6">

@@ -1,6 +1,6 @@
 import { Modal, Button, Badge } from "react-bootstrap";
 
-import { Mail,CalendarDays, Clock, ShieldCheck} from "lucide-react";
+import { Mail,CalendarDays, Phone, Clock, ShieldCheck} from "lucide-react";
 
 export default function ProfileModal({ show, onClose, member }) 
 {
@@ -21,7 +21,7 @@ export default function ProfileModal({ show, onClose, member })
     }
 
     return (
-        <Modal  show={show}  onHide={onClose}  centered size="md" backdrop="static" contentClassName="border-0 rounded-4 overflow-hidden shadow">           
+        <Modal  show={show}  onHide={onClose}  centered size="md"  contentClassName="border-0 rounded-4 overflow-hidden shadow">           
 
            
             <div className=" text-white text-center p-4 position-relative" style={{ backgroundColor: "#062169" }}>
@@ -75,6 +75,25 @@ export default function ProfileModal({ show, onClose, member })
                             </p>
                         </div>
 
+                       
+
+
+                    </div>
+
+                    <div className="d-flex align-items-center gap-3 mt-4">
+                          <div className="bg-primary bg-opacity-10 text-primary rounded-3 p-3">
+                            <Phone size={21} />
+                        </div>
+
+                        <div className="flex-grow-1">
+                            <small className="text-muted">
+                                Mobile No
+                            </small>
+
+                            <p className="fw-semibold mb-0 text-break">
+                                {member.phone || "-"}
+                            </p>
+                        </div>
                     </div>
 
                 </div>
@@ -90,7 +109,15 @@ export default function ProfileModal({ show, onClose, member })
 
                         <div className="bg-white border rounded-3 p-3 h-100">
 
-                            <CalendarDays size={20} className="text-primary mb-2"/>
+                            <div  className="d-flex justify-content-center align-items-center bg-primary bg-opacity-10 text-primary rounded-3 mb-2"
+                                            style={{ width: '44px', height: '44px' }} >
+                                <CalendarDays size={20} className="text-primary "/>
+
+
+                            </div>
+
+
+                            
 
                             <small className="text-muted d-block">
                                 Created On
@@ -109,7 +136,14 @@ export default function ProfileModal({ show, onClose, member })
 
                         <div className="bg-white border rounded-3 p-3 h-100">
 
-                            <Clock size={20} className="text-primary mb-2"/>
+                           
+
+                            <div  className="d-flex justify-content-center align-items-center bg-primary bg-opacity-10 text-primary rounded-3 mb-2"
+                                            style={{ width: '44px', height: '44px' }} >
+     
+                                <Clock size={20} className="text-primary" />
+                            </div>
+                           
   
                             <small className="text-muted d-block">
                                 Last Updated

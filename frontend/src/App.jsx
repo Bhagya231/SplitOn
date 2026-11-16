@@ -1,6 +1,6 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
-
+import "./App.css"
 
 import RootLayout from "./pages/RootLayout";
 import DashboardLayout from "./pages/DashboardLayout";
@@ -15,6 +15,10 @@ import { GroupLoader } from "./util/GroupLoader";
 import GroupDetailsPage from "./pages/GroupDetailsPage";
 import { AuthLoader } from "./util/AuthLoader";
 import { GroupDetailsLoader } from "./util/GroupDetailsLoader";
+import AddExpensePage from "./pages/AddExpensePage";
+import EditExpensePage from "./pages/EditExpensesPage";
+import { AddExpenseLoader } from "./util/AddExpenseLoader";
+import {EditExpenseLoader} from "./util/EditExpenseLoader"
 
 
 import LoginPage from "./pages/LoginPage";
@@ -50,19 +54,29 @@ const router = createBrowserRouter([
                         HydrateFallback: () => <p>Loading groups...</p>
                     },
                     {
-                        path: "groups/:groupId",
-                        element: <GroupDetailsPage />,
-                        loader: GroupDetailsLoader
-                    },
-                     {
-                        path: "expenses/:id",
-                        element: <ExpenseDetails />,
-                        loader: ExpenseDetailsLoader
+                      path: "groups/:groupId",
+                      element: <GroupDetailsPage />,
+                      loader: GroupDetailsLoader
                     },
                     {
-                        path: ":groupId/balance",
-                        element: <BalancesPage />,
-                        loader: BalanceLoader
+                      path: "groups/:groupId/expenses/add",
+                      element: <AddExpensePage />,
+                      loader: AddExpenseLoader
+                    },
+                    {
+                      path: "groups/:groupId/expenses/:id",
+                      element: <ExpenseDetails />,
+                      loader: ExpenseDetailsLoader
+                    },
+                    {
+                      path: "groups/:groupId/expenses/:id/edit",
+                      element: <EditExpensePage />,
+                      loader: EditExpenseLoader
+                    },
+                    {
+                      path: "groups/:groupId/balance",
+                      element: <BalancesPage />,
+                      loader: BalanceLoader
                     },                    
                    
                 ]

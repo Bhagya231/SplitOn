@@ -1,7 +1,7 @@
 
-function Button({children,  type = 'button',variant = '',size = 'medium',loading = false,disabled = false,onClick,className = '',})
+function Button({children,  type = 'button',variant = 'primary',size = 'medium',loading = false,disabled = false,onClick,className = '',})
 {
-  const buttonClasses = ['btn',`btn-${variant}`,size === 'small' ? 'btn-sm' : '', size === 'large' ? 'btn-lg' : '',className,].filter(Boolean).join(' ');
+  const buttonClasses = ['btn',`btn-${variant}`,size === 'small' ? 'btn-sm' : '', size === 'large' ? 'btn-lg' : '', "rounded-pill",className,].filter(Boolean).join(' ');
 
   return (
     <button

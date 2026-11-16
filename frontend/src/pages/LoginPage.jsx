@@ -128,6 +128,7 @@ function LoginPage()
             id: data.id,
             name: data.name,
             email: data.email,
+            phone: data.phone,
             role: data.role,
             createdAt: data.createdAt,
             updatedAt: data.updatedAt

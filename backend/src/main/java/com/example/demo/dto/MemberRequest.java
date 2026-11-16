@@ -20,6 +20,9 @@ public class MemberRequest
     @Email(message = "Enter a valid email")
     private String email;
 
+    @NotBlank(message = "phone is required")
+    private String phone;
+
 
 
 

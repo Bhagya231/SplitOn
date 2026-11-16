@@ -71,7 +71,7 @@ public class AuthServiceImpl implements AuthService
 
             RegisterResponse response = membersMapper.toRegisterResponse(savedMember,token);
 
-            log.info("Patient registered successfully. User ID: {} ", savedMember.getId());
+            log.info("Member registered successfully. User ID: {} ", savedMember.getId());
 
 
             return response;

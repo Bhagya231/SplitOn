@@ -1,8 +1,9 @@
 
-import { useNavigate, useLoaderData } from "react-router-dom";
-import { ArrowLeft, CalendarDays, Users, UserRound,Split,ReceiptText, Pencil,Trash2, } from "lucide-react";
+import { useNavigate, useLoaderData , Link} from "react-router-dom";
+import { ArrowLeft, Home, ChevronRight, CalendarDays, Users, UserRound,Split,ReceiptText, Pencil,Trash2, } from "lucide-react";
 import Button from "../components/common/Button";
 import Card from "../components/common/Card";
+import bg from "../assets/membersbg.png";
 
 
 function ExpenseDetails({ onDeleteExpense })
@@ -15,7 +16,7 @@ function ExpenseDetails({ onDeleteExpense })
 
     const formattedDate = expense.date ? new Date(expense.date).toLocaleDateString("en-GB", {day: "2-digit",month: "short",year: "numeric",}): "Not specified";
 
- 
+    const groupId = expense.groupId;
 
    function money(value)
     {
@@ -45,24 +46,65 @@ function ExpenseDetails({ onDeleteExpense })
 
 
        
-
     return (
-        <div className="container-fluid px-3 px-md-4 py-4">
 
-            
+         <div  className="container-fluid py-2 px-0"
+                    style={{
+                        backgroundImage: `url(${bg})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                        backgroundRepeat: "no-repeat",
+                        minHeight: "100vh"
+                    }}
+                >
+        <div className="container  px-md-4 py-3">
+
+
             <div className="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
 
-                <Button type="button" variant="secondary" onClick={() => navigate("/")}>          
-                    <ArrowLeft size={18} className="me-2" />
-                    Back to History
-                </Button>
+               <nav aria-label="breadcrumb" className="mb-4">
+                    <ol className="breadcrumb align-items-center mb-0">
+
+                        <li className="breadcrumb-item">
+                            <Link
+                                to="/app"
+                                className="text-decoration-none text-muted d-inline-flex align-items-center gap-1"
+                            >
+                                <Home size={16} />
+                                Groups
+                            </Link>
+                        </li>
+
+                        <li className="d-flex align-items-center mx-2">
+                            <ChevronRight size={14} className="text-muted" />
+                        </li>
+
+                        <li className="breadcrumb-item">
+                             <Link  to={`/app/groups/${groupId}`} className="text-decoration-none text-muted d-inline-flex align-items-center gap-1">
+                                Group Details
+                            </Link>
+
+                        </li>
+
+                        <li className="d-flex align-items-center mx-2">
+                            <ChevronRight size={14} className="text-muted" />
+                        </li>
+                        <li className="breadcrumb-item active text-truncate">
+                            {expense?.title}
+                        </li>
+
+
+
+                    </ol>
+                </nav>
+
 
                 
             </div>
 
            
             <div className="d-flex align-items-center gap-3 mb-4">
-                <div className="bg-primary bg-opacity-10 text-primary
+                <div className="bg-secondary bg-opacity-10 text-primary
                     rounded-4 p-3">
                     <ReceiptText size={36} />
                 </div>
@@ -76,7 +118,7 @@ function ExpenseDetails({ onDeleteExpense })
             </div>
 
             
-            <Card className="rounded-4 bg-primary bg-opacity-10">
+            <Card className="rounded-4  bg-opacity-10">
 
                 <div className="row align-items-center g-4">
                     <div className="col-md-6">
@@ -250,24 +292,22 @@ function ExpenseDetails({ onDeleteExpense })
            
             <div className="d-flex flex-column flex-sm-row justify-content-between gap-3 mb-4">
 
-                <Button type="button" variant="secondary" onClick={() => navigate("/")}>
-                    <ArrowLeft size={18} className="me-2" />
-                    Back
-                </Button>
+             
 
                 <div className="d-flex flex-column flex-sm-row gap-3">
-                    <Button type="button" variant="primary" onClick={() => navigate(`/expenses/${expense.id}/edit`,{state: { expense },})}>
+                    <Button type="button" variant="primary" onClick={() => navigate(`/app/groups/${groupId}/expenses/${expense.id}/edit`, {state: { expense }, }) }>
                         <Pencil size={18} className="me-2" />
                         Edit Expense
                     </Button>
 
-                    <Button type="button" variant="danger" onClick={() => onDeleteExpense?.(expense.id)} disabled={!onDeleteExpense}>
+                    <Button type="button" variant="danger" onClick={() => onDeleteExpense?.(expense.id)} >
                         <Trash2 size={18} className="me-2" />
                         Delete Expense
                     </Button>
                 </div>
             </div>
 
+        </div>
         </div>
     );
 }

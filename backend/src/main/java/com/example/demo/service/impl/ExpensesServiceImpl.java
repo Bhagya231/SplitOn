@@ -173,18 +173,16 @@ public class ExpensesServiceImpl implements ExpensesService
         }
     }
 
+
     @Override
-    public List<BalanceResponse> getAllBalances(Groups group)
-    {
+    public List<BalanceResponse> getAllBalances(Groups group) {
 
         log.info("Fetching group balances");
 
         try {
-
             String groupId = group.getId().toString();
 
-            List<GroupMembers> groupMembers =
-                    groupMembersRepository.findActiveGroupMembers(group.getId().toString());
+            List<GroupMembers> groupMembers = groupMembersRepository.findActiveGroupMembers(groupId);
 
             List<Expenses> expenses = expensesRepository.getAllExpensesByGroupId(groupId);
 
@@ -192,40 +190,35 @@ public class ExpensesServiceImpl implements ExpensesService
             Map<UUID, BigDecimal> totalShare = new HashMap<>();
 
 
-            for (GroupMembers groupMember : groupMembers)
-            {
+            for (GroupMembers groupMember : groupMembers) {
                 UUID memberId = groupMember.getMember().getId();
 
                 totalPaid.put(memberId, BigDecimal.ZERO);
                 totalShare.put(memberId, BigDecimal.ZERO);
             }
 
+
             for (Expenses expense : expenses)
             {
 
                 UUID payerId = expense.getPayer().getId();
 
-                BigDecimal oldPaid = totalPaid.get(payerId);
+                BigDecimal oldPaid = totalPaid.getOrDefault(payerId, BigDecimal.ZERO);
 
-                BigDecimal newPaid = oldPaid.add(expense.getAmount());
-
-                totalPaid.put(payerId, newPaid);
-
-
+                totalPaid.put(payerId, oldPaid.add(expense.getAmount()));
 
                 List<SplitMembers> splits = splitMembersRepository.getSplitMembersByExpenseId(expense.getId().toString());
-
 
                 for (SplitMembers split : splits)
                 {
 
                     UUID memberId = split.getMembers().getId();
 
-                    BigDecimal oldShare = totalShare.get(memberId);
+                    BigDecimal oldShare = totalShare.getOrDefault(memberId, BigDecimal.ZERO);
 
-                    BigDecimal newShare = oldShare.add(split.getValue());
+                    BigDecimal shareValue = split.getValue() == null ? BigDecimal.ZERO : split.getValue();
 
-                    totalShare.put(memberId, newShare);
+                    totalShare.put(memberId, oldShare.add(shareValue));
                 }
             }
 
@@ -236,12 +229,11 @@ public class ExpensesServiceImpl implements ExpensesService
             {
 
                 Members member = groupMember.getMember();
-
                 UUID memberId = member.getId();
 
-                BigDecimal paid = totalPaid.get(memberId);
-                BigDecimal share = totalShare.get(memberId);
+                BigDecimal paid = totalPaid.getOrDefault(memberId, BigDecimal.ZERO);
 
+                BigDecimal share = totalShare.getOrDefault(memberId, BigDecimal.ZERO);
 
                 BigDecimal balance = paid.subtract(share);
 
@@ -253,16 +245,11 @@ public class ExpensesServiceImpl implements ExpensesService
                 response.setTotalShare(share);
                 response.setBalance(balance);
 
-
-                if (balance.compareTo(BigDecimal.ZERO) > 0)
-                {
+                if (balance.compareTo(BigDecimal.ZERO) > 0) {
                     response.setStatus(BalanceStatus.SHOULD_RECEIVE);
-                }
-                else if (balance.compareTo(BigDecimal.ZERO) < 0)
-                {
+                } else if (balance.compareTo(BigDecimal.ZERO) < 0) {
                     response.setStatus(BalanceStatus.OWES);
-                }
-                else {
+                } else {
                     response.setStatus(BalanceStatus.SETTLED);
                 }
 
@@ -271,13 +258,11 @@ public class ExpensesServiceImpl implements ExpensesService
 
             return responses;
 
-        } catch (Exception e)
-        {
+        } catch (Exception e) {
             log.error("Error while fetching group balances", e);
-            throw new BadRequestException( e.getMessage());
+            throw new BadRequestException(e.getMessage());
         }
     }
-
 
 
 

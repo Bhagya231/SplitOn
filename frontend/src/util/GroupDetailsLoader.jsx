@@ -9,8 +9,13 @@ export async function GroupDetailsLoader({ params, request })
         const search = url.searchParams.get("search") || "";
         const page = Number(url.searchParams.get("page") || 0);
 
+      
+
     try {
-        const [groupResponse, expenseResponse] = await Promise.all([
+
+        const member = JSON.parse(localStorage.getItem("member"));
+
+        const [groupResponse, expenseResponse, balanceResponse, totalResponse] = await Promise.all([
             api.get(`/groups/${groupId}`),
             api.get(`/groups/${groupId}/expenses`, {
                 params: {
@@ -18,17 +23,25 @@ export async function GroupDetailsLoader({ params, request })
                     page,
                     size: 5
                 }
-            })
+            }),
+            api.get(`/groups/${groupId}/expenses/balance`),
+
+            api.get(`/groups/${groupId}/expenses/total`)
         ]);
 
         console.log("group " , groupResponse.data);
         console.log("expense ", expenseResponse.data);
+        console.log("balance", balanceResponse.data);
+        console.log("total expenses", totalResponse.data);
 
         return {
             group: groupResponse.data,
             expenses: expenseResponse.data.content || [],
             expensePage: expenseResponse.data,
-            search
+            search,
+            balances: balanceResponse.data || [],
+            totalExpenses: totalResponse.data || 0,
+            currentMemberId: member?.id
         };
 
     } catch (error) {

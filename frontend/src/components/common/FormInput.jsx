@@ -1,19 +1,7 @@
 import { useState } from 'react';
 
-function FormInput({label,
-  inputType = 'input',
-  name,
-  type = 'text',
-  value,
-  onChange,
-  placeholder,
-  error,
-  className = '',
-  disabled = false,
-  readOnly = false,
-  required = false,
-  rows = 3,
-}) {
+function FormInput({label, inputType = 'input', name,type = 'text',value, onChange,placeholder,error,className = '',disabled = false,readOnly = false,required = false,rows = 3,})
+ {
   const [showPassword, setShowPassword] = useState(false);
 
   const isPassword = type === 'password';

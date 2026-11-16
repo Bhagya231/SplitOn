@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import EditGroupModal from "../components/EditGroupModal";
 import DeleteConfirm from "../components/common/DeleteModal";
 import GroupCard from "../components/GroupCard";
+import Button from "../components/common/Button";
 
 import Img from "../assets/loginbg.png";
 import bg from "../assets/membersbg.png"
@@ -266,14 +267,12 @@ export default function GroupsPage()
             setTotalElements(updatedTotal);
             setTotalPages(updatedPages);
 
-            setGroups(previous =>
-                previous.filter(group => group.id !== deletingGroup.id)
-            );
+            setGroups(previous =>  previous.filter(group => group.id !== deletingGroup.id) );
 
             setDeletingGroup(null);
             setErrorMessage("");
 
-            // If the current page no longer exists, go to the previous page.
+           
             if (currentPage >= updatedPages && currentPage > 0) {
 
                 const params = new URLSearchParams(searchParams);
@@ -287,10 +286,7 @@ export default function GroupsPage()
 
             console.error("Failed to delete group:", error);
 
-            setErrorMessage(
-                error.response?.data?.message ||
-                "Failed to delete group. Please try again."
-            );
+            setErrorMessage( error.response?.data?.message || "Failed to delete group. Please try again.");
 
         } finally {
             setDeleting(false);
@@ -299,7 +295,7 @@ export default function GroupsPage()
 
        
     return (
-        <div className="container-fluid py-2 px-0"
+        <div className="container-fluid py-2 px-3"
             style={{
             backgroundImage: `url(${bg})`,
             backgroundSize: "cover",
@@ -341,8 +337,7 @@ export default function GroupsPage()
                                     e.preventDefault();
                                     handleSearch();
                                 }}>
-                                    <div
-                                        className="input-group rounded-pill overflow-hidden bg-white"
+                                    <div  className="input-group rounded-pill overflow-hidden bg-white"
                                         style={{
                                             border: "1px solid #ced4da",
                                             minHeight: "46px"
@@ -387,7 +382,7 @@ export default function GroupsPage()
 
                         
                             <div className="col-12 col-lg-4 d-flex justify-content-lg-end">
-                                <button
+                                <Button
                                     type="button"
                                     className="btn text-white rounded-pill px-4"
                                     style={{
@@ -408,7 +403,7 @@ export default function GroupsPage()
                                             Create Group
                                         </>
                                     )}
-                                </button>
+                                </Button>
                             </div>
 
                         </div>
@@ -419,12 +414,12 @@ export default function GroupsPage()
                     
 
                     <div className="d-flex justify-content-between align-items-center me-3 ">
-                        <div className="mt-3">
+                        {/* <div className="mt-3">
                   
                                 <p className="text-light mb-0">
                                     Total Groups: {totalElements}
                                 </p>
-                        </div>
+                        </div> */}
 
                 
 
@@ -506,11 +501,12 @@ export default function GroupsPage()
 
             {totalPages > 0 && (
 
-                <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mx-3 my-4 gap-3">
+                <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mx-3 px-1 my-4 gap-3">
 
-                    <p className="text-secondary mb-0">
-                        Page {currentPage + 1} of {Math.max(totalPages, 1)}
-                    </p>
+                    <div className="text-secondary small">
+                        Showing <strong>{groups.length}</strong> of{" "}
+                        <strong>{totalElements}</strong> Groups
+                    </div>
 
                      <nav aria-label="Group pagination">
 

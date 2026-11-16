@@ -27,7 +27,8 @@ export default function Navbar() {
     
     useEffect(() => {
         function handleClickOutside(event) {
-            if (menuRef.current && !menuRef.current.contains(event.target)) {
+            if (menuRef.current && !menuRef.current.contains(event.target)) 
+            {
                 setShowMenu(false);
             }
         }
@@ -85,39 +86,26 @@ export default function Navbar() {
                     
                     <div className="position-relative" ref={menuRef}>
 
-                        <button
-                            type="button"
-                            className="btn btn-outline-light rounded-circle d-flex align-items-center justify-content-center p-2"
-                            style={{ width: "42px", height: "42px" }}
-                            onClick={() => setShowMenu(prev => !prev)}
-                        >
+                        <button type="button" className="btn btn-outline-light rounded-circle d-flex align-items-center justify-content-center p-2"
+                            style={{ width: "42px", height: "42px" }}  onClick={() => setShowMenu(prev => !prev)}>
                             <UserRound size={22} />
                         </button>
 
                         {showMenu && (
-                            <div
-                                className="position-absolute end-0 mt-2 bg-white rounded-3 shadow border py-2"
-                                style={{ width: "190px", zIndex: 1050 }}
-                            >
+                            <div className="position-absolute end-0 mt-2 bg-white rounded-3 shadow border py-2"
+                                style={{ width: "190px", zIndex: 1050 }}>
 
-                                <button
-                                    type="button "
-                                    className="btn btn-outline-primary dropdown-item d-flex align-items-center gap-2 px-3 py-2"
-                                    onClick={() => {
-                                        setShowMenu(false);
-                                        setShowProfileModal(true);
-                                    }}
-                                >
+                                <button type="button "  className="btn btn-outline-primary dropdown-item d-flex align-items-center gap-2 px-3 py-2"
+                                      onClick={() => { setShowMenu(false); setShowProfileModal(true); }}>
+
                                     <User size={18} />
                                     Profile
                                 </button>
 
                                 <hr className="dropdown-divider my-2" />
 
-                                <button
-                                    type="button"
-                                    className="btn btn-sm w-100 text-start btn-outline-danger px-3 py-2 border-0 rounded-0 dropdown-item "
-                                    onClick={() => {
+                                <button type="button" className="btn btn-sm w-100 text-start btn-outline-danger px-3 py-2 border-0 rounded-0 dropdown-item "
+                                        onClick={() => {
                                         setShowMenu(false);
                                         setShowLogoutModal(true);
                                     }}
