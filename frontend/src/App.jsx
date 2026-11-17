@@ -59,6 +59,11 @@ const router = createBrowserRouter([
                       loader: GroupDetailsLoader
                     },
                     {
+                      path: "groups/:groupId/balance",
+                      element: <BalancesPage />,
+                      loader: BalanceLoader
+                    }, 
+                    {
                       path: "groups/:groupId/expenses/add",
                       element: <AddExpensePage />,
                       loader: AddExpenseLoader
@@ -73,11 +78,8 @@ const router = createBrowserRouter([
                       element: <EditExpensePage />,
                       loader: EditExpenseLoader
                     },
-                    {
-                      path: "groups/:groupId/balance",
-                      element: <BalancesPage />,
-                      loader: BalanceLoader
-                    },                    
+                      
+           
                    
                 ]
             }

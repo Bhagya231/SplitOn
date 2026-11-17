@@ -16,6 +16,7 @@ public class RegisterResponse
     private String name;
     private String email;
     private String role;
+    private String phone;
 
     private String token;
 

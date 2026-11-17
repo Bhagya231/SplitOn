@@ -11,6 +11,8 @@ import Img from "../assets/loginbg.png";
 import bg from "../assets/membersbg.png"
 import CreateGroupModal from "../components/CreateGroupModal";
 import api from "../util/Api";
+import Pic from "../assets/Group.png"
+import { toast } from "react-toastify";
 
 
 
@@ -150,9 +152,13 @@ export default function GroupsPage()
             
             setMembers(response.data.content || response.data);
 
+            return true;
+
         } catch (error) {
             console.error("Failed to fetch members", error);
-             setErrorMessage(error.response?.data?.message || "Failed to load members.");
+
+             toast.error(error.response?.data?.message || "Failed to load members." );
+
         } finally {
             setLoadingMembers(false);
         }
@@ -176,16 +182,11 @@ export default function GroupsPage()
 
         const newGroup = response.data;
 
-        const matchesSearch =
-            !search.trim() ||
-            newGroup.name?.toLowerCase().includes(search.trim().toLowerCase());
+        const matchesSearch = !search.trim() || newGroup.name?.toLowerCase().includes(search.trim().toLowerCase());
 
         if (currentPage === 0 && matchesSearch) {
 
-            setGroups(previous => [
-                newGroup,
-                ...previous
-            ].slice(0, PAGE_SIZE));
+            setGroups(previous => [ newGroup,  ...previous ].slice(0, PAGE_SIZE));
 
             const updatedTotal = totalElements + 1;
 
@@ -196,16 +197,15 @@ export default function GroupsPage()
         setShowCreateModal(false);
         setErrorMessage("");
 
+        toast.success("Group created successfully!");
+
         return true;
 
     } catch (error) {
 
         console.error("Failed to create group:", error.response?.data || error.message);
 
-        setErrorMessage(
-            error.response?.data?.message ||
-            "Failed to create group. Please try again."
-        );
+         toast.error(  error.response?.data?.message ||  "Failed to create group. Please try again.");
 
         return false;
 
@@ -231,11 +231,14 @@ export default function GroupsPage()
             setGroups(previous => previous.map(group => group.id === groupId ? { ...group, ...response.data } : group));
 
             setErrorMessage("");
+
+            toast.success("Group updated successfully!");
             return true;
 
         } catch (error) {
             console.error("Failed to update group:", error);
-            setErrorMessage( error.response?.data?.message || "Failed to update group. Please try again.");
+
+            toast.error( error.response?.data?.message || "Failed to update group. Please try again." );
 
         return false;
         } finally {
@@ -270,7 +273,8 @@ export default function GroupsPage()
             setGroups(previous =>  previous.filter(group => group.id !== deletingGroup.id) );
 
             setDeletingGroup(null);
-            setErrorMessage("");
+
+            toast.success("Group deleted successfully!");
 
            
             if (currentPage >= updatedPages && currentPage > 0) {
@@ -286,7 +290,7 @@ export default function GroupsPage()
 
             console.error("Failed to delete group:", error);
 
-            setErrorMessage( error.response?.data?.message || "Failed to delete group. Please try again.");
+           toast.error( error.response?.data?.message || "Failed to delete group. Please try again.");
 
         } finally {
             setDeleting(false);
@@ -343,8 +347,8 @@ export default function GroupsPage()
                                             minHeight: "46px"
                                         }}
                                     >
-                                        <input
-                                            type="text"
+                                        <input type="text"
+                                            
                                             className="form-control border-0 shadow-none ps-4"
                                             value={search}
                                             onChange={(e) => setSearch(e.target.value)}
@@ -353,29 +357,20 @@ export default function GroupsPage()
 
                                         
                                         {search.trim() && (
-                                            <button
-                                                type="button"
+                                            <Button                                                 
                                                 className="btn bg-white border-0 px-2"
                                                 onClick={handleClearSearch}
                                                 title="Clear search"
                                             >
                                                 <i className="bi bi-x-circle text-secondary"></i>
-                                            </button>
+                                            </Button>
                                         )}
 
                                         
-                                        <button
-                                            type="submit"
-                                            className="btn text-white px-3 rounded-pill m-1"
-                                            style={{
-                                                backgroundColor: "#244B9B"
-                                            }}
-                                            
-                                            title="Search groups"
-                                        >
+                                        <Button type="submit" className="btn text-white px-3 rounded-pill m-1"  title="Search groups" >
                                             <i className="bi bi-search me-1"></i>
                                         
-                                        </button>
+                                        </Button>
                                     </div>
                                 </form>
                             </div>
@@ -478,21 +473,26 @@ export default function GroupsPage()
                 </div>
                 ))
             ) : (
-                <div className="col-12 text-center py-5">
-                <i className="bi bi-people fs-1 text-secondary"></i>
+                <div className="col-12 text-center pb-5">
+                {/* <i className="bi bi-people fs-1 text-secondary"></i> */}
 
-                <h5 className="mt-3 fw-bold">
-                    No Groups Found
-                </h5>
+                <img src={Pic} alt="No expenses found"  
+                        style={{
+                            width: "100%",
+                            maxWidth: "480px",
+                            height: "250px",
+                            objectFit: "contain"
+                        }}
+                    />
 
-                <p className="text-secondary">
+                <p className="text-secondary mt-0">
                     Create a group to start sharing expenses.
                 </p>
 
-                <button type="button" className="btn text-white px-4" style={{ backgroundColor: "#244B9B" }} onClick={handleOpenCreateModal}>
+                <Button type="button" className="btn text-white px-4" style={{ backgroundColor: "#244B9B" }} onClick={handleOpenCreateModal}>
                     <i className="bi bi-plus-lg me-2"></i>
                     Create Your First Group
-                </button>
+                </Button>
                 </div>
             )}
 

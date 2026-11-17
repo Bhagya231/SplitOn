@@ -85,13 +85,13 @@ export default function GroupHeader({ group, onEdit, onDelete })
                         {showMenu && (
                             <div className="position-absolute end-0 mt-2 bg-white rounded-3 shadow border py-2"
                             style={{ width: "160px",zIndex: 10,}} onClick={e => e.stopPropagation()} >
-                                <Button type="button" className="btn btn-sm w-100 btn-outline-primary text-start px-3 py-2 border-0 rounded-0 group-menu-item"
+                                <Button variant="light" className="btn btn-sm w-100 btn-outline-primary text-start px-3 py-2 border-0 rounded-0 group-menu-item"
                                     onClick={(e) => { e.stopPropagation(); setShowMenu(false);onEdit(group); }} >
                                     <Pencil size={18} />
                                     Edit Group
                                 </Button>
 
-                                <Button type="button"  className="btn btn-sm w-100 text-start btn-outline-danger px-3 py-2 border-0 rounded-0  group-menu-item"
+                                <Button variant="light"  className="btn btn-sm w-100 text-start btn-outline-danger px-3 py-2 border-0 rounded-0  group-menu-item"
                                     onClick={(e) => { e.stopPropagation(); setShowMenu(false); onDelete(group);}}>
                                     <Trash2 size={18} />
                                     Delete Group

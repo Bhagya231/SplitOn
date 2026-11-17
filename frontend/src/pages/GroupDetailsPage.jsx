@@ -1,12 +1,14 @@
 
-import { useState } from "react";
-import { useLoaderData, Link,useNavigate,useRevalidator} from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useLoaderData,useLocation, Link,useNavigate,useRevalidator} from "react-router-dom";
 
 import { ChevronRight, Home } from "lucide-react";
+import ExpensePagination from "../components/common/Pagination"
 
 
 import bg from "../assets/membersbg.png";
 import api from "../util/Api";
+
 
 import GroupHeader from "../components/GroupHeader";
 import FinancialOverview from "../components/FinancialOverview";
@@ -26,6 +28,7 @@ export default function GroupDetailsPage() {
     const { group,expenses,expensePage,balances = [],totalExpenses = 0,currentMemberId } = useLoaderData();
 
     const navigate = useNavigate();
+    const location = useLocation();
     const revalidator = useRevalidator();
 
     const [editingGroup, setEditingGroup] = useState(null);
@@ -41,6 +44,31 @@ export default function GroupDetailsPage() {
     
 
     const [errorMessage, setErrorMessage] = useState("");
+
+
+    const [toast, setToast] = useState({show: false,message: "",type: "success"});
+            
+
+        useEffect(() => {
+
+            const toastData = location.state?.toast;
+
+            if (toastData) {
+
+                setToast({
+                    show: true,
+                    message: toastData.message,
+                    type: toastData.type
+                });
+
+                navigate(location.pathname, {
+                    replace: true,
+                    state: null
+                });
+
+            }
+
+        }, [location, navigate]);
 
 
     const currentBalance = balances.find(  item => item.memberId === currentMemberId );
@@ -228,7 +256,7 @@ export default function GroupDetailsPage() {
                         totalExpenses={totalExpenses}
                         yourContribution={currentBalance?.totalPaid || 0}
                         yourBalance={currentBalance?.balance || 0}
-                        onViewBalance={() => navigate(`/groups/${group.id}/balance`) }
+                        onViewBalance={() => navigate(`/app/groups/${group.id}/balance`) }
                         onAddExpense={handleOpenAddExpense}
                     />
                 </section>
@@ -275,6 +303,8 @@ export default function GroupDetailsPage() {
                                 onAddExpense={handleOpenAddExpense}
                                 
                             />
+
+                            <ExpensePagination expensePage={expensePage} />
 
                         </div>
                     </div>

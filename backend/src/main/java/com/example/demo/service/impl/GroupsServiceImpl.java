@@ -103,7 +103,7 @@ public class GroupsServiceImpl implements GroupsService
                 groupMembersList.add(user);
             }
 
-            List<GroupMembers> savedGroupMembers = groupMembersRepository.saveAll(groupMembersList);
+            groupMembersRepository.saveAll(groupMembersList);
 
             log.info("Group created successfully: {}", savedGroup.getId());
 

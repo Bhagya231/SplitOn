@@ -4,6 +4,7 @@ import { Modal, Form, Spinner } from "react-bootstrap";
 import { Search, Users, UserRound } from "lucide-react";
 import api from "../util/Api";
 import Button from "./common/Button";
+import Pic from "../assets/NoM.png"
 
 export default function AddMembersModal({
     show,
@@ -35,8 +36,7 @@ export default function AddMembersModal({
         setErrorMessage("");
 
         try {
-            const response = await api.get(
-                `/groups/${groupId}/available`,
+            const response = await api.get(`/groups/${groupId}/available`,
                 {
                     params: {
                         search: appliedSearch,
@@ -52,10 +52,7 @@ export default function AddMembersModal({
         } catch (error) {
             console.error("Failed to fetch available members:", error);
 
-            setErrorMessage(
-                error.response?.data?.message ||
-                "Failed to load available members."
-            );
+            setErrorMessage( error.response?.data?.message ||"Failed to load available members.");
         } finally {
             setLoading(false);
         }
@@ -71,20 +68,19 @@ export default function AddMembersModal({
 
     function handleSelectMember(memberId) {
         setSelectedMembers(previous =>
-            previous.includes(memberId)
-                ? previous.filter(id => id !== memberId)
-                : [...previous, memberId]
-        );
+            previous.includes(memberId) ? previous.filter(id => id !== memberId) : [...previous, memberId]);
     }
 
-    function handleClearSearch() {
-    setSearch("");
-    setAppliedSearch("");
-    setPage(0);
-    setSelectedMembers([]);
-}
+    function handleClearSearch() 
+    {
+        setSearch("");
+        setAppliedSearch("");
+        setPage(0);
+        setSelectedMembers([]);
+    }
 
-    function handleClose() {
+    function handleClose() 
+    {
         if (adding) return;
 
         setMembers([]);
@@ -97,16 +93,15 @@ export default function AddMembersModal({
         onClose();
     }
 
-    async function handleAddMembers() {
+    async function handleAddMembers() 
+    {
         if (selectedMembers.length === 0) return;
 
         setAdding(true);
         setErrorMessage("");
 
         try {
-            const request = selectedMembers.map(memberId => ({
-                memberId
-            }));
+            const request = selectedMembers.map(memberId => ({memberId }));
 
             await api.post( `/groups/${groupId}/members`,request );
 
@@ -119,22 +114,15 @@ export default function AddMembersModal({
         } catch (error) {
             console.error("Failed to add members:", error);
 
-            setErrorMessage( error.response?.data?.message ||"Failed to add members. Please try again."
-            );
+            setErrorMessage( error.response?.data?.message ||"Failed to add members. Please try again." );
         } finally {
             setAdding(false);
         }
     }
 
     return (
-        <Modal
-            show={show}
-            onHide={handleClose}
-            centered
-            
-            backdrop={adding ? "static" : true}
-            keyboard={!adding}
-        >
+        <Modal show={show} onHide={handleClose} centered backdrop={adding ? "static" : true} keyboard={!adding}>
+
             <Modal.Header closeButton={!adding}>
                 <Modal.Title className="fw-bold">
                     <Users size={22} className="me-2 text-primary" />
@@ -148,48 +136,6 @@ export default function AddMembersModal({
                     Select members you want to add to this group.
                 </p>
 
-                
-               <div className="mb-3">
-    <Form onSubmit={handleSearch}>
-        <div
-            className="input-group rounded-pill overflow-hidden bg-white"
-            style={{
-                border: "1px solid #ced4da",
-                minHeight: "46px"
-            }}
-        >
-            <input
-                type="text"
-                className="form-control border-0 shadow-none ps-4"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search members by name or email..."
-            />
-
-            {search.trim() && (
-                <button
-                    type="button"
-                    className="btn bg-white border-0 px-2"
-                    onClick={handleClearSearch}
-                    title="Clear search"
-                >
-                    <i className="bi bi-x-circle text-secondary"></i>
-                </button>
-            )}
-
-            <button
-                type="submit"
-                className="btn text-white px-3 rounded-pill m-1"
-                style={{
-                    backgroundColor: "#244B9B"
-                }}
-                title="Search members"
-            >
-                <i className="bi bi-search"></i>
-            </button>
-        </div>
-    </Form>
-</div>
 
                 {errorMessage && (
                     <div className="alert alert-danger py-2">
@@ -197,6 +143,41 @@ export default function AddMembersModal({
                     </div>
                 )}
 
+
+                
+               <div className="mb-3">
+                    <Form onSubmit={handleSearch}>
+                        <div  className="input-group rounded-pill overflow-hidden bg-white"
+                            style={{
+                                border: "1px solid #ced4da",
+                                minHeight: "46px"
+                            }} >
+                            <input type="text"                                
+                                className="form-control border-0 shadow-none ps-4"
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                                placeholder="Search members by name or email..."
+                            />
+
+                           {search.trim() && (
+                                <Button                                                 
+                                    className="btn bg-white border-0 px-2"
+                                    onClick={handleClearSearch}
+                                    title="Clear search"
+                                >
+                                    <i className="bi bi-x-circle text-secondary"></i>
+                                </Button>
+                            )}
+
+                            <Button type="submit" className="btn text-white px-3 rounded-pill m-1"  title="Search groups" >
+                                <i className="bi bi-search me-1"></i>
+                            
+                            </Button>
+                        </div>
+                    </Form>
+                </div>
+
+                
                
                 <div className="border rounded-3 overflow-hidden">
 
@@ -212,25 +193,14 @@ export default function AddMembersModal({
                             const selected = selectedMembers.includes(member.id);
 
                             return (
-                                <label
-                                    key={member.id}
-                                    className={`d-flex align-items-center gap-3 p-3 border-bottom ${
-                                        selected ? "bg-primary-subtle" : "bg-white"
-                                    }`}
-                                    style={{ cursor: "pointer" }}
-                                >
-                                    <Form.Check
-                                        type="checkbox"
-                                        checked={selected}
-                                        onChange={() =>
-                                            handleSelectMember(member.id)
-                                        }
+                                <label  key={member.id} className={`d-flex align-items-center gap-3 p-3 border-bottom ${selected ? "bg-primary-subtle" : "bg-white" }`}
+                                    style={{ cursor: "pointer" }} >
+                                    <Form.Check type="checkbox" checked={selected}
+                                        onChange={() =>  handleSelectMember(member.id) }
                                     />
 
-                                    <div
-                                        className="rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center flex-shrink-0"
-                                        style={{ width: 44, height: 44 }}
-                                    >
+                                    <div   className="rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center flex-shrink-0"
+                                        style={{ width: 44, height: 44 }} >
                                         <UserRound size={23} />
                                     </div>
 
@@ -248,10 +218,16 @@ export default function AddMembersModal({
                         })
                     ) : (
                         <div className="text-center py-5">
-                            <Users
-                                size={35}
-                                className="text-secondary mb-2"
-                            />
+                            {/* <Users  size={35} className="text-secondary mb-2" /> */}
+                      
+                            <img src={Pic} alt="No expenses found"  
+                                    style={{
+                                        width: "100%",
+                                        maxWidth: "380px",
+                                        height: " 100px",
+                                        objectFit: "contain"
+                                    }}
+                                />
 
                             <h6 className="fw-semibold">
                                 No available members

@@ -23,15 +23,15 @@ export default function SplitTable({members = [],amount = 0,splitType,percentage
 
     return (
         <div className="mt-3">
-            <div   className="table-responsive border rounded-3"  style={{maxHeight: "320px", overflowY: "auto",overflowX: "auto" }} >
+            <div   className="table-responsive border rounded-3"  style={{maxHeight: "320px", overflowY: "auto" }} >
                 <table className="table table-hover align-middle mb-0">
                     <thead className="table-light"   style={{ position: "sticky", top: 0,zIndex: 2}} >
                         <tr>
-                            <th style={{ minWidth: "180px" }}>Participant</th>
+                            <th style={{ width: splitType === "PERCENTAGE" ? "40%" : "55%" }}>Participant</th>
                             {splitType === "PERCENTAGE" && (
-                                <th style={{ minWidth: "130px" }}>Percentage</th>
+                                <th style={{ width: "30%" }}>Percentage</th>
                             )}
-                            <th className="text-end" style={{ minWidth: "120px" }}>
+                            <th className="text-end"  style={{ width: splitType === "PERCENTAGE" ? "30%" : "45%" }}>
                                 Share
                             </th>
                         </tr>
@@ -45,20 +45,20 @@ export default function SplitTable({members = [],amount = 0,splitType,percentage
                                 </td>
 
                                 {splitType === "PERCENTAGE" && (
-                                    <td>
+                                    <td >
                                         <div className="input-group input-group-sm">
                                             <FormInput
                                                 type="number"
                                                 className="form-control"
                                                 min="0"
                                                 max="100"
-                                                step="any"
+                                                 step="0.01"
                                                 value={percentages[member.value] ?? ""}
                                                 onChange={event => onPercentageChange(member.value,event.target.value)}
                                                     
                                                         
                                             />
-                                            <span className="input-group-text">%</span>
+                                            <span className="mt-2"> %</span>
                                         </div>
                                     </td>
                                 )}

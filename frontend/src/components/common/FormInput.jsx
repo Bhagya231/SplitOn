@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-function FormInput({label, inputType = 'input', name,type = 'text',value, onChange,placeholder,error,className = '',disabled = false,readOnly = false,required = false,rows = 3,})
+function FormInput({label, inputType = 'input', name,step,type = 'text',value, onChange,placeholder,error,className = '',disabled = false,readOnly = false,required = false,rows = 3,min})
  {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -39,6 +39,8 @@ function FormInput({label, inputType = 'input', name,type = 'text',value, onChan
             name={name}
             value={value}
             onChange={onChange}
+            min={min}
+            step={step}
             placeholder={placeholder}
             className={`${inputClasses} ${isPassword ? 'pe-5' : ''}`.trim()}
             disabled={disabled}

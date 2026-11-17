@@ -66,7 +66,7 @@ public interface MembersRepository extends JpaRepository<Members, UUID>
     @Query(value = """
         SELECT m.*
         FROM members m
-        WHERE m.is_deleted = 0
+        WHERE m.is_deleted = false
           AND (:search IS NULL
               OR :search = ''
               OR LOWER(m.name) LIKE LOWER(CONCAT('%', :search, '%'))
@@ -75,7 +75,8 @@ public interface MembersRepository extends JpaRepository<Members, UUID>
               FROM group_members gm
               WHERE gm.member_id = m.id
                 AND gm.expense_groups_id = :groupId
-                AND gm.is_deleted = 0 ) ORDER BY m.created_at DESC""",
+                AND gm.is_deleted = 0 ) 
+                ORDER BY m.created_at DESC""",
             countQuery = """
         SELECT COUNT(*)
         FROM members m

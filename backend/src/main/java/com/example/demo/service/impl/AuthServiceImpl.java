@@ -66,7 +66,7 @@ public class AuthServiceImpl implements AuthService
 
             CustomUserDetails userDetails = new CustomUserDetails(savedMember);
 
-            // Generate JWT
+
             String token = jwtUtils.generateToken(userDetails);
 
             RegisterResponse response = membersMapper.toRegisterResponse(savedMember,token);
@@ -115,8 +115,16 @@ public class AuthServiceImpl implements AuthService
 
             String token = jwtUtils.generateToken(userDetails);
 
+            log.info("Phone from member entity: {}", members.getPhone());
 
-            return membersMapper.toLoginResponse(members, token);
+            LoginResponse response = membersMapper.toLoginResponse(members, token);
+
+            log.info("Phone from login response: {}", response.getPhone());
+
+
+            log.info("login completed successfully ");
+
+            return response;
 
         }catch (BadCredentialsException e)
         {

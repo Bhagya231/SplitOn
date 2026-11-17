@@ -1,17 +1,57 @@
 
-import { useLoaderData } from "react-router-dom";
+import { useLoaderData , Link,useParams } from "react-router-dom";
 import Card from "../components/common/Card";
 import {formatCurrency} from "../util/formatCurrency";
 import Button from "../components/common/Button";
 import BalanceChart from "../components/BalanceChart";
 
 
+import {  Home } from "lucide-react";
 
-function BalancesPage() {
-  const {balances,total } = useLoaderData();
+
+
+function BalancesPage() 
+{
+
+  const { balance, summary, groupName } = useLoaderData();
+
+
+
+  const { groupId } = useParams();
 
   return (
     <div className="container py-4">
+
+      <nav aria-label="breadcrumb" className="mb-4">
+
+          <ol className="breadcrumb align-items-center mb-2">
+
+              <li className="breadcrumb-item">
+                  <Link to="/app" className="text-decoration-none text-secondary d-flex align-items-center gap-1" >
+                      <Home size={16} />
+                      Groups
+                  </Link>
+              </li>
+
+              <li className="breadcrumb-item">
+                  <Link to={`/groups/${groupId}`} className="text-decoration-none text-secondary" >
+                      
+                  </Link>
+              </li>
+
+              <li className="breadcrumb-item active fw-semibold" aria-current="page">
+                  Balance Sheet
+              </li>
+
+          </ol>
+
+          <h3 className="fw-bold mb-1">Balance Sheet</h3>
+
+          <p className="text-secondary small mb-0">
+              View group expenses and member balances
+          </p>
+
+      </nav>
 
 
         <Card title="Total Summary">
@@ -37,7 +77,7 @@ function BalancesPage() {
       <Card className="shadow-lg rounded-3 border-0 overflow-hidden">
         <h4 className="mb-3">Member Balances</h4>
 
-        {balances.length === 0 ? (
+        {balance.length === 0 ? (
           <p className="text-muted">No balances available.</p>
         ) : (
           <div className="table-responsive   ">
@@ -54,7 +94,7 @@ function BalancesPage() {
               </thead>
 
               <tbody>
-                {balances.map((member, index) => {
+                {balance.map((member, index) => {
                   const balance = Number(member.balance ?? 0);
 
                   return (
@@ -91,7 +131,7 @@ function BalancesPage() {
         <div className="container-fluid">
       <div className="row">
         <div className="col-12">
-          <BalanceChart members= {balances} />
+          <BalanceChart members= {balance} />
         </div>
       </div>
     </div>

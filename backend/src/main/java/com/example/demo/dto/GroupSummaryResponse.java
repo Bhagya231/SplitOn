@@ -12,11 +12,9 @@ public class GroupSummaryResponse
 
     private Long totalExpenses;
 
-    private BigDecimal totalAmount;
+    private Long totalMembers;
 
-    private BigDecimal totalAmountPaid;
+    private Long totalExpenseCount;
 
-    private BigDecimal totalToReceive;
-
-    private BigDecimal totalToPay;
+    private String groupName;
 }

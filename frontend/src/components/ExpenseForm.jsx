@@ -1,37 +1,29 @@
 
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Select from "react-select";
 
 import FormInput from "./common/FormInput";
 import Button from "./common/Button";
 import SplitTable from "./splitTable";
+import DatePicker from "./common/DatePicker";
+import { toast } from "react-toastify";
+
+
+import api from "../util/Api";
 import { validateExpense } from "../util/validations";
 
-function getLocalToday() {
-  const today = new Date();
 
-  return [
-    today.getFullYear(),
-    String(today.getMonth() + 1).padStart(2, "0"),
-    String(today.getDate()).padStart(2, "0"),
-  ].join("-");
-}
 
-export default function ExpenseForm({
-  members = [],
-  expense = null,
-  onSubmit,
-  onCancel,
-}) {
+export default function ExpenseForm({ members = [],expense = null, groupId,onCancel,})
+ {
+  const navigate = useNavigate();
+
   const isEdit = Boolean(expense);
 
-  const [form, setForm] = useState({
-    title: "",
-    amount: "",
-    date: "",
-  });
-
-  console.log("members ", members);
+  const [form, setForm] = useState({title: "", amount: "",date: "",});
+    
+   
 
   const [payer, setPayer] = useState(null);
   const [selectedMembers, setSelectedMembers] = useState([]);
@@ -42,8 +34,8 @@ export default function ExpenseForm({
   const [errorMessage, setErrorMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const memberOptions = useMemo(
-    () =>
+ 
+  const memberOptions = useMemo(() =>
       members.map((member) => ({
         value: member.memberId,
         label: member.memberName,
@@ -51,20 +43,23 @@ export default function ExpenseForm({
     [members]
   );
 
-  const localToday = getLocalToday();
-
-  // Load existing expense when editing.
+  const amount = form.amount;
+  
   useEffect(() => {
-    if (!expense) {
-      setForm({ title: "", amount: "", date: "" });
-      setPayer(null);
-      setSelectedMembers([]);
-      setSplitType("EQUAL");
-      setPercentages({});
-      setErrors({});
-      setErrorMessage("");
-      return;
-    }
+        if (!errorMessage) return;
+
+        const timer = setTimeout(() => {
+        setErrorMessage("");
+        }, 4000);
+
+        return () => clearTimeout(timer);
+    }, [errorMessage]);
+
+
+
+  useEffect(() => {
+
+    if (!expense) return;
 
     setForm({
       title: expense.title ?? "",
@@ -78,13 +73,10 @@ export default function ExpenseForm({
 
     setPayer(payerOption ?? null);
 
-    const selected = (expense.splitMembers ?? [])
-      .map((splitMember) => {
+    const selected = (expense.splitMembers ?? []).map((splitMember) => {
         const memberId = splitMember.memberId ?? splitMember.id;
 
-        return memberOptions.find(
-          (option) => option.value === memberId
-        );
+        return memberOptions.find( (member) => member.value === memberId);
       })
       .filter(Boolean);
 
@@ -95,15 +87,42 @@ export default function ExpenseForm({
 
     (expense.splitMembers ?? []).forEach((splitMember) => {
       const memberId = splitMember.memberId ?? splitMember.id;
+
       values[memberId] = splitMember.percentage ?? "";
     });
 
     setPercentages(values);
-    setErrors({});
-    setErrorMessage("");
+
   }, [expense, memberOptions]);
 
-  function handleChange(event) {
+
+
+    function calculateEqualPercentages(members, payerId)
+     {
+        if (members.length === 0) return {};
+
+        const equalPercentage = Number((100 / members.length).toFixed(2));
+
+        const remainder = Number((100 - equalPercentage * members.length).toFixed(2));
+
+        const percentages = {};
+
+        members.forEach((member) => {
+            percentages[member.value] = equalPercentage;
+        });
+
+        const payer = members.find((member) => member.value === payerId );
+
+        const payerMember = payer || members[0];
+
+        percentages[payerMember.value] = Number((percentages[payerMember.value] + remainder).toFixed(2));
+
+        return percentages;
+    }
+
+  
+  function handleChange(event) 
+  {
     const { name, value } = event.target;
 
     setForm((previous) => ({
@@ -119,48 +138,60 @@ export default function ExpenseForm({
     setErrorMessage("");
   }
 
-  function handleMembersChange(options) {
-    const selected = options ?? [];
 
-    setSelectedMembers(selected);
+  
+  function handleMembersChange(options) 
+  {
+        const selected = options ?? [];
 
-    setPercentages((previous) => {
-      const updated = {};
+        setSelectedMembers(selected);
 
-      selected.forEach((member) => {
-        updated[member.value] = previous[member.value] ?? "";
-      });
-
-      return updated;
-    });
-
-    setErrors((previous) => ({
-      ...previous,
-      splitMembers: "",
-      percentage: "",
-    }));
-  }
-
-  function handlePayerChange(option) {
-    setPayer(option);
-
-    if (option) {
-      setSelectedMembers((previous) => {
-        if (previous.some((member) => member.value === option.value)) {
-          return previous;
+        if (splitType === "PERCENTAGE")
+        {
+            setPercentages(calculateEqualPercentages(selected, payer?.value));
         }
 
-        return [...previous, option];
-      });
-    }
+        setErrors((previous) => ({
+            ...previous,
+            splitMembers: "",
+            percentage: "",
+        }));
+        }
 
-    setErrors((previous) => ({
-      ...previous,
-      payerId: "",
-    }));
-  }
 
-  function handlePercentageChange(memberId, value) {
+ 
+    function handlePayerChange(option) 
+    {
+        setPayer(option);
+
+        if (option)
+        {
+            setSelectedMembers((previous) => {
+            const updated = previous.some(
+                (member) => member.value === option.value) ? previous : [...previous, option];
+
+            if (splitType === "PERCENTAGE")
+            {
+                setPercentages(calculateEqualPercentages(updated, option.value));
+            }
+
+            return updated;
+            });
+
+        } else if (splitType === "PERCENTAGE") {
+            setPercentages(calculateEqualPercentages(selectedMembers, null));
+        }
+
+        setErrors((previous) => ({
+            ...previous,
+            payerId: "",
+        }));
+        }
+
+
+  
+  function handlePercentageChange(memberId, value)
+   {
     setPercentages((previous) => ({
       ...previous,
       [memberId]: value,
@@ -172,86 +203,99 @@ export default function ExpenseForm({
     }));
   }
 
+
+ 
   function handleSplitTypeChange(value) {
-    setSplitType(value);
-    setErrors((previous) => ({
-      ...previous,
-      percentage: "",
-    }));
+        setSplitType(value);
 
-    if (value === "PERCENTAGE" && selectedMembers.length > 0) {
-      const equalPercentage = (
-        100 / selectedMembers.length
-      ).toFixed(2);
+        setErrors((previous) => ({
+            ...previous,
+            percentage: "",
+        }));
 
-      const updated = {};
+        if (value === "PERCENTAGE") {
+            setPercentages(calculateEqualPercentages(selectedMembers, payer?.value));
+        }
+        }
 
-      selectedMembers.forEach((member) => {
-        updated[member.value] = equalPercentage;
-      });
 
-      setPercentages(updated);
-    }
-  }
-
-  async function handleSubmit(event) {
+  
+  async function handleSubmit(event) 
+  {
     event.preventDefault();
 
     if (submitting) return;
 
+    
     const expenseData = {
       title: form.title,
       amount: form.amount,
       date: form.date,
       payerId: payer?.value ?? "",
       splitType,
-      splitMembers: selectedMembers.map((member) => ({
-        id: member.value,
-        ...(splitType === "PERCENTAGE"
-          ? { percentage: Number(percentages[member.value]) }
+      splitMembers: selectedMembers.map((member) => ({ id: member.value,
+        ...(splitType === "PERCENTAGE"? {
+              percentage: Number(percentages[member.value]),
+            }
           : {}),
       })),
     };
 
+   
     const validationErrors = validateExpense(expenseData);
 
     setErrors(validationErrors);
     setErrorMessage("");
 
-    if (Object.keys(validationErrors).length > 0) return;
+    if (Object.keys(validationErrors).length > 0) {
+      return;
+    }
 
     setSubmitting(true);
 
     try {
-      const savedExpense = await onSubmit(expenseData);
+    
+      if (isEdit) {
+        await api.put( `/groups/${groupId}/expenses/${expense.id}`, expenseData);
 
-      if (!savedExpense) {
-        setErrorMessage("Unable to save expense. Please try again.");
+        toast.success("Expense edited successfully");
+
+        navigate(`/app/groups/${groupId}/expenses/${expense.id}`);
+        
+      
+      } else {
+        await api.post(`/groups/${groupId}/expenses/add`,expenseData );
+
+        toast.success("Expense added successfully!");
+
+        navigate(`/app/groups/${groupId}`);
+
       }
+
+      
+      
+
     } catch (error) {
       console.error("Expense submission failed:", error);
 
-      setErrorMessage(
-        error.response?.data?.message ||
-        "Something went wrong. Please try again."
-      );
+      toast.error( error.response?.data?.message || "Something went wrong. Please try again.");
+
     } finally {
       setSubmitting(false);
     }
   }
 
-  return (
 
-    
-    
+  return (
     <form onSubmit={handleSubmit}>
-      <div className="card border-0 shadow-sm rounded-4">
-        <div className="card-body p-3 p-md-4">
+      <div className="card border-0 shadow-sm rounded-4 ">
+        <div className="card-body p-3 p-md-4 mx-2">
 
           <div className="mb-4">
             <h4 className="fw-bold mb-1">
               {isEdit ? "Edit Expense" : "Add New Expense"}
             </h4>
+
             <p className="text-muted mb-0">
               Enter expense details and select how to split it.
             </p>
@@ -263,8 +307,8 @@ export default function ExpenseForm({
             </div>
           )}
 
-          <div className="row">
-            <div className="col-md-8">
+          <div className="row ">
+            <div className="col-md-12">
               <FormInput
                 label="Description"
                 name="title"
@@ -281,6 +325,7 @@ export default function ExpenseForm({
                 label="Amount"
                 name="amount"
                 type="number"
+                min={1}
                 value={form.amount}
                 onChange={handleChange}
                 placeholder="Enter amount"
@@ -290,16 +335,19 @@ export default function ExpenseForm({
             </div>
 
             <div className="col-md-6">
-              <FormInput
-                label="Expense Date"
-                name="date"
-                type="date"
-                value={form.date}
-                onChange={handleChange}
-                max={localToday}
-                required
-                error={errors.date}
-              />
+                <DatePicker
+                    label="Expense Date"
+                    name="date"
+                    value={form.date}
+                    onChange={(value) =>
+                        setForm(prev => ({
+                            ...prev,
+                            date: value
+                        }))
+                    }
+                    error={errors.date}
+                    required
+                />
             </div>
           </div>
 
@@ -339,6 +387,7 @@ export default function ExpenseForm({
                     checked={splitType === "EQUAL"}
                     onChange={() => handleSplitTypeChange("EQUAL")}
                   />
+
                   <label className="form-check-label" htmlFor="equalSplit">
                     Equal Split
                   </label>
@@ -353,6 +402,7 @@ export default function ExpenseForm({
                     checked={splitType === "PERCENTAGE"}
                     onChange={() => handleSplitTypeChange("PERCENTAGE")}
                   />
+
                   <label className="form-check-label" htmlFor="percentageSplit">
                     Percentage Split
                   </label>
@@ -366,25 +416,20 @@ export default function ExpenseForm({
           <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
             <div>
               <h5 className="fw-semibold mb-1">Participants</h5>
+
               <span className="text-muted small">
                 {selectedMembers.length} of {memberOptions.length} selected
               </span>
             </div>
 
             <div className="d-flex gap-2">
-              <Button
-                type="button"
-                size="small"
-                variant="outline-primary"
+              <Button type="button" size="small" variant="outline-primary"
                 onClick={() => handleMembersChange(memberOptions)}
-                disabled={selectedMembers.length === memberOptions.length}
-              >
+                disabled={selectedMembers.length === memberOptions.length} >
                 Select All
               </Button>
 
-              <Button
-                type="button"
-                size="small"
+              <Button   size="small"
                 variant="outline-secondary"
                 onClick={() => handleMembersChange([])}
                 disabled={selectedMembers.length === 0}
@@ -401,6 +446,7 @@ export default function ExpenseForm({
             onChange={handleMembersChange}
             placeholder="Search and select participants"
             closeMenuOnSelect={false}
+            noOptionsMessage={() => "All group members have been added!"}
             menuPortalTarget={document.body}
             styles={{
               valueContainer: (base) => ({
@@ -440,20 +486,11 @@ export default function ExpenseForm({
           </div>
 
           <div className="d-flex flex-wrap gap-2 justify-content-end mt-4">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={onCancel}
-              disabled={submitting}
-            >
-              Cancel
+            <Button type="button" variant="secondary" onClick={onCancel} disabled={submitting} >
+                Cancel
             </Button>
 
-            <Button
-              type="submit"
-              loading={submitting}
-              disabled={submitting}
-            >
+            <Button  type="submit"  loading={submitting} disabled={submitting} >
               {isEdit ? "Update Expense" : "Add Expense"}
             </Button>
           </div>
@@ -461,7 +498,5 @@ export default function ExpenseForm({
         </div>
       </div>
     </form>
-
-  
   );
 }

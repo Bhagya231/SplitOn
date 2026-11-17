@@ -97,7 +97,7 @@ export default function FinancialOverview({ totalExpenses = 0,yourContribution =
                             <Card className={`border-0 rounded-4 h-100 overflow-hidden ${item.background}`}>
                                 <Card.Body className="p-3 p-md-4 position-relative">
 
-                                    <div className="d-flex align-items-center gap-3 position-relative"
+                                    <div className="d-flex align-items-center gap-2 position-relative"
                                         style={{ zIndex: 1 }}>
 
                                         <div className={`rounded-circle ${item.iconBackground} ${item.color} d-flex align-items-center justify-content-center flex-shrink-0`}
@@ -125,8 +125,8 @@ export default function FinancialOverview({ totalExpenses = 0,yourContribution =
                                   
                                     <Decoration
                                         className="position-absolute end-0 bottom-0 opacity-50"
-                                        size={85}
-                                        strokeWidth={1.5}
+                                        size={55}
+                                        strokeWidth={1}
                                     />
 
                                 </Card.Body>

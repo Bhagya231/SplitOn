@@ -4,12 +4,22 @@ import { ArrowLeft, Home, ChevronRight, CalendarDays, Users, UserRound,Split,Rec
 import Button from "../components/common/Button";
 import Card from "../components/common/Card";
 import bg from "../assets/membersbg.png";
+import DeleteConfirm from "../components/common/DeleteModal";
+import ToastMessage from "../components/common/ToastMessage";
+import  { useState } from "react"
+import api from "../util/Api";
 
 
-function ExpenseDetails({ onDeleteExpense })
+function ExpenseDetails()
 {
     const navigate = useNavigate();
     const expense = useLoaderData();
+
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+
+    const [toast, setToast] = useState({show: false,message: "",type: "success"});
+
 
     const members = expense.splitMembers ?? [];
     const amount = Number(expense.amount) || 0;
@@ -28,6 +38,13 @@ function ExpenseDetails({ onDeleteExpense })
         return Number(member.value) || 0;
     }
 
+
+    function showToast(message, type = "success") 
+    {
+
+        setToast({ show: true, message,type });
+        
+    }
     
     function getMemberPercentage(member) 
     {
@@ -43,6 +60,46 @@ function ExpenseDetails({ onDeleteExpense })
     
 
     const splitTypeLabel = { EQUAL: "Equal Split", PERCENTAGE: "Percentage",};
+
+
+     function handleDeleteClick() {
+        setShowDeleteModal(true);
+    }
+
+
+   
+    function handleCancelDelete() {
+        if (!deleting) {
+            setShowDeleteModal(false);
+        }
+    }
+
+     async function handleConfirmDelete()
+     {
+
+        try {
+
+            setDeleting(true);
+
+            const response = await api.delete(`/groups/${groupId}/expenses/${expense.id}`);
+
+            setShowDeleteModal(false);
+
+            
+
+             navigate(`/app/groups/${groupId}`, { state: { toast: { message: response?.data?.message || "Expense deleted successfully",  type: "success" } } });
+
+        } catch (error) {
+
+            console.error("Failed to delete expense:", error);
+            const errorMessage = error.response?.data?.message || "Failed to delete expense. Please try again."; showToast(errorMessage, "danger");
+
+        } finally {
+
+            setDeleting(false);
+
+        }
+    }
 
 
        
@@ -98,24 +155,44 @@ function ExpenseDetails({ onDeleteExpense })
                     </ol>
                 </nav>
 
-
                 
             </div>
 
            
-            <div className="d-flex align-items-center gap-3 mb-4">
-                <div className="bg-secondary bg-opacity-10 text-primary
-                    rounded-4 p-3">
-                    <ReceiptText size={36} />
+            <div className="d-flex align-items-center justify-content-between gap-3 mb-4">
+                
+                <div className="d-flex align-items-center gap-3">
+                    <div className="bg-secondary bg-opacity-10 text-primary rounded-4 p-3">
+                        <ReceiptText size={36} />
+                    </div>
+
+                
+                    <div>
+                        <h2 className="fw-bold mb-1">Expense Details</h2>
+                        <p className="text-secondary mb-0">
+                            View complete information about this expense
+                        </p>
+                    </div> 
                 </div>
 
-                <div>
-                    <h2 className="fw-bold mb-1">Expense Details</h2>
-                    <p className="text-secondary mb-0">
-                        View complete information about this expense
-                    </p>
+                <div className="d-flex flex-column flex-sm-row gap-2">
+
+                        <Button type="button" variant="primary" onClick={() => navigate(`/app/groups/${groupId}/expenses/${expense.id}/edit`, {state: { expense }, }) }>
+                            <Pencil size={18} className="me-2" />
+                            Edit Expense
+                        </Button>
+
+                        <Button type="button" variant="danger" onClick={handleDeleteClick} >
+                            <Trash2 size={18} className="me-2" />
+                            Delete Expense
+                        </Button>
                 </div>
             </div>
+
+
+           
+                
+            
 
             
             <Card className="rounded-4  bg-opacity-10">
@@ -131,7 +208,10 @@ function ExpenseDetails({ onDeleteExpense })
                         </p> */}
 
                         <div className="d-flex align-items-center gap-2">
-                            <CalendarDays size={20} />
+                            {/* <div className="bg-primary bg-opacity-10  rounded-3 p-3">                               
+                                <CalendarDays size={20} />
+                            </div> */}
+                            
                             <span>{formattedDate}</span>
                         </div>
                     </div>
@@ -290,22 +370,35 @@ function ExpenseDetails({ onDeleteExpense })
             </Card>
 
            
-            <div className="d-flex flex-column flex-sm-row justify-content-between gap-3 mb-4">
+            {/* <div className="d-flex flex-column flex-sm-row justify-content-between gap-3 mb-4">
 
              
 
-                <div className="d-flex flex-column flex-sm-row gap-3">
-                    <Button type="button" variant="primary" onClick={() => navigate(`/app/groups/${groupId}/expenses/${expense.id}/edit`, {state: { expense }, }) }>
-                        <Pencil size={18} className="me-2" />
-                        Edit Expense
-                    </Button>
+               
+            </div> */}
 
-                    <Button type="button" variant="danger" onClick={() => onDeleteExpense?.(expense.id)} >
-                        <Trash2 size={18} className="me-2" />
-                        Delete Expense
-                    </Button>
-                </div>
-            </div>
+            <DeleteConfirm
+                show={showDeleteModal}
+                title="Delete Expense"
+                itemName={expense.title}
+                message="This expense will be permanently deleted. "
+                onCancel={handleCancelDelete}
+                onConfirm={handleConfirmDelete}
+                loading={deleting}
+            />
+
+            <ToastMessage
+                show={toast.show}
+                message={toast.message}
+                type={toast.type}
+                onClose={() =>
+                    setToast(prev => ({
+                        ...prev,
+                        show: false
+                    }))
+                }
+            />
+
 
         </div>
         </div>

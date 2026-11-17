@@ -136,7 +136,8 @@ public class ExpensesServiceImpl implements ExpensesService
 
             Page<Expenses> expensesPage = expensesRepository.getAllExpensesByGroupId(group.getId().toString(), search, pageable);
 
-            return expensesPage.map(expense -> {
+            return expensesPage.map(expense ->
+            {
                             expense.setSplitMembers(splitMembersRepository.getSplitMembersByExpenseId(expense.getId().toString()));
 
                 return expensesMapper.toResponse(expense);
@@ -168,8 +169,7 @@ public class ExpensesServiceImpl implements ExpensesService
 
         } catch (Exception e) {
             log.error("Error while fetching expense: {}", e.getMessage(), e);
-            throw new RuntimeException(
-                    "Error while fetching expense by ID", e);
+            throw new BadRequestException( e.getMessage());
         }
     }
 

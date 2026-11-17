@@ -40,16 +40,13 @@ function ExpenseHistory({ expenses = [], groupId, onAddExpense  }) {
 
     if (expenses.length === 0) {
     return (
-        <div className="d-flex flex-column align-items-center justify-content-center text-center py-4 py-md-5">
+        <div className="d-flex flex-column align-items-center justify-content-center text-center py-2 py-md-3">
 
-            <img
-                src={img}
-                alt="No expenses found"
-                className="img-fluid mb-3"
+            <img src={img} alt="No expenses found"  
                 style={{
                     width: "100%",
-                    maxWidth: "320px",
-                    height: "220px",
+                    maxWidth: "480px",
+                    height: "250px",
                     objectFit: "contain"
                 }}
             />
@@ -161,7 +158,7 @@ function ExpenseHistory({ expenses = [], groupId, onAddExpense  }) {
                                 </td>
 
                                 <td className="text-center">
-                                    <Button  className="btn btn-sm " onClick={() => handleViewExpense(expense.id)}>
+                                    <Button  variant="light" className="btn btn-sm btn-outline-primary rounded-pill px-3 d-inline-flex align-items-center gap-1"  onClick={() => handleViewExpense(expense.id)}>
                                         <Eye size={16} />
                                         <span className="ms-1">View</span>
                                     </Button>
@@ -255,11 +252,7 @@ function ExpenseHistory({ expenses = [], groupId, onAddExpense  }) {
                             </div>
 
                             <div className="d-flex justify-content-end mt-3">
-                                <Button
-                                    type="button"
-                                    className="btn btn-sm btn-outline-primary"
-                                    onClick={() => handleViewExpense(expense.id)}
-                                >
+                                <Button variant="light"   className="btn btn-sm btn-outline-primary" onClick={() => handleViewExpense(expense.id)} >
                                     <Eye size={16} />
                                     <span className="ms-1">View Details</span>
                                 </Button>

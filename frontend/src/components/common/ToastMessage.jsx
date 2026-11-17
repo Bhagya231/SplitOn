@@ -9,7 +9,7 @@ export default function ToastMessage({
     onClose
 }) {
     return (
-        <ToastContainer position="top-end" className="p-3">
+        <ToastContainer position="bottom-end" className="p-3">
             <Toast
                 show={show}
                 onClose={onClose}
