@@ -7,6 +7,16 @@ export default function SplitTable({members = [],amount = 0,splitType,percentage
 {
 
 
+    function money(value) {
+        return Number(value ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 0,  maximumFractionDigits: 2,});
+    }
+
+    function formatPercentage(value) 
+    {
+        return Number(value ?? 0).toLocaleString("en-IN", {  minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    }
+
+
     const totalPercentage = members.reduce((total, member) =>total + (Number(percentages[member.value]) || 0),0 );
 
     function getShare(member) 
@@ -21,9 +31,25 @@ export default function SplitTable({members = [],amount = 0,splitType,percentage
         return totalAmount * (Number(percentages[member.value]) || 0) / 100;
     }
 
+     const totalShare = members.reduce( (total, member) => total + getShare(member), 0);
+
+
     return (
         <div className="mt-3">
+             {members.length > 0 && (
+
+                <>
+                     <h5 className="fw-semibold mb-3">
+                            Expense Split
+                        </h5>
+
+               
+
+                
+           
             <div   className="table-responsive border rounded-3"  style={{maxHeight: "320px", overflowY: "auto" }} >
+
+                
                 <table className="table table-hover align-middle mb-0">
                     <thead className="table-light"   style={{ position: "sticky", top: 0,zIndex: 2}} >
                         <tr>
@@ -52,11 +78,9 @@ export default function SplitTable({members = [],amount = 0,splitType,percentage
                                                 className="form-control"
                                                 min="0"
                                                 max="100"
-                                                 step="0.01"
+                                                step="0.01"
                                                 value={percentages[member.value] ?? ""}
-                                                onChange={event => onPercentageChange(member.value,event.target.value)}
-                                                    
-                                                        
+                                                onChange={event => onPercentageChange(member.value,event.target.value)}         
                                             />
                                             <span className="mt-2"> %</span>
                                         </div>
@@ -64,31 +88,36 @@ export default function SplitTable({members = [],amount = 0,splitType,percentage
                                 )}
 
                                 <td className="text-end text-nowrap">
-                                    ₹{getShare(member).toFixed(2)}
+                                    ₹{ money(getShare(member))}
                                 </td>
                             </tr>
                         ))}
 
-                        {members.length === 0 && (
-                            <tr>
-                                <td
-                                    colSpan={splitType === "PERCENTAGE" ? 3 : 2}
-                                    className="text-center text-muted py-4"
-                                >
-                                    Select participants to see the split.
-                                </td>
-                            </tr>
-                        )}
+                       
                     </tbody>
+
+                     <tfoot  className="table-light fw-bold" style={{  position: "sticky", bottom: 0,  zIndex: 2 }}  >
+                        <tr>
+                            <td>Total </td>
+                            {splitType === "PERCENTAGE" && (
+                                <td> 
+                                    <span className={ totalPercentage === 100 ? "text-success" : "text-danger" }>
+                                        {totalPercentage.toFixed(2)}%
+                                    </span>
+                                </td>
+                            )}
+
+                            <td className="text-end text-nowrap">
+                                ₹{money(totalShare)}
+                            </td>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
+             </>
+             )}
 
-            {splitType === "PERCENTAGE" && (
-                <div className="d-flex justify-content-between mt-3">
-                    <span className="text-muted">Total percentage</span>
-                    <strong>{totalPercentage.toFixed(2)}%</strong>
-                </div>
-            )}
+            
         </div>
     );
 }

@@ -4,7 +4,12 @@ import { Wallet,HandCoins,Scale,ChartNoAxesColumn,Plus} from "lucide-react";
 
 export default function FinancialOverview({ totalExpenses = 0,yourContribution = 0,yourBalance = 0,onViewBalance,onAddExpense }) 
 {
-    const formatAmount = (amount) => `₹${Number(amount || 0).toFixed(2)}`;
+   
+
+    function formatAmount(value)
+    {
+        return Number(value ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2,});
+    }
 
     const cards = [
         {
@@ -123,11 +128,7 @@ export default function FinancialOverview({ totalExpenses = 0,yourContribution =
                                     </div>
 
                                   
-                                    <Decoration
-                                        className="position-absolute end-0 bottom-0 opacity-50"
-                                        size={55}
-                                        strokeWidth={1}
-                                    />
+                                    <Decoration className="position-absolute end-0 bottom-0 opacity-50" size={55} strokeWidth={1} />
 
                                 </Card.Body>
                             </Card>

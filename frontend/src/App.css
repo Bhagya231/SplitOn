@@ -14,5 +14,13 @@
     color: #9333EA !important;
 }
 
+.breadcrumb-link {
+  color: #6c757d; 
+  transition: color 0.2s ease, transform 0.2s ease;
+}
 
+.breadcrumb-link:hover {
+  color: var(--bs-primary) !important; 
+  text-decoration: underline !important; 
+}
 

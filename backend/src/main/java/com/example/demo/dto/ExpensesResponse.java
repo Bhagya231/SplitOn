@@ -23,6 +23,7 @@ public class ExpensesResponse
     private String payerName;
 
     private UUID groupId;
+    private String groupName;
 
     private SplitType splitType;
 

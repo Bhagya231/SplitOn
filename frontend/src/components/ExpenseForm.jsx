@@ -29,6 +29,7 @@ export default function ExpenseForm({ members = [],expense = null, groupId,onCan
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [splitType, setSplitType] = useState("EQUAL");
   const [percentages, setPercentages] = useState({});
+  const [manualPercentages, setManualPercentages] = useState({});
 
   const [errors, setErrors] = useState({});
   const [errorMessage, setErrorMessage] = useState("");
@@ -56,68 +57,110 @@ export default function ExpenseForm({ members = [],expense = null, groupId,onCan
     }, [errorMessage]);
 
 
+    const selectAllOption = { value: "__select_all__", label: "Select All",  };
 
-  useEffect(() => {
+    const optionsWithSelectAll = [  selectAllOption, ...memberOptions, ];
 
-    if (!expense) return;
+    useEffect(() => {
 
-    setForm({
-      title: expense.title ?? "",
-      amount: String(expense.amount ?? ""),
-      date: expense.date?.slice(0, 10) ?? "",
-    });
+        if (!expense) return;
 
-    const payerOption = memberOptions.find(
-      (member) => member.value === expense.payerId
-    );
-
-    setPayer(payerOption ?? null);
-
-    const selected = (expense.splitMembers ?? []).map((splitMember) => {
-        const memberId = splitMember.memberId ?? splitMember.id;
-
-        return memberOptions.find( (member) => member.value === memberId);
-      })
-      .filter(Boolean);
-
-    setSelectedMembers(selected);
-    setSplitType(expense.splitType ?? "EQUAL");
-
-    const values = {};
-
-    (expense.splitMembers ?? []).forEach((splitMember) => {
-      const memberId = splitMember.memberId ?? splitMember.id;
-
-      values[memberId] = splitMember.percentage ?? "";
-    });
-
-    setPercentages(values);
-
-  }, [expense, memberOptions]);
-
-
-
-    function calculateEqualPercentages(members, payerId)
-     {
-        if (members.length === 0) return {};
-
-        const equalPercentage = Number((100 / members.length).toFixed(2));
-
-        const remainder = Number((100 - equalPercentage * members.length).toFixed(2));
-
-        const percentages = {};
-
-        members.forEach((member) => {
-            percentages[member.value] = equalPercentage;
+        setForm({
+        title: expense.title ?? "",
+        amount: String(expense.amount ?? ""),
+        date: expense.date?.slice(0, 10) ?? "",
         });
 
-        const payer = members.find((member) => member.value === payerId );
+        const payerOption = memberOptions.find(
+        (member) => member.value === expense.payerId
+        );
 
-        const payerMember = payer || members[0];
+        setPayer(payerOption ?? null);
 
-        percentages[payerMember.value] = Number((percentages[payerMember.value] + remainder).toFixed(2));
+        const selected = (expense.splitMembers ?? []).map((splitMember) => {
+            const memberId = splitMember.memberId ?? splitMember.id;
 
-        return percentages;
+            return memberOptions.find( (member) => member.value === memberId);
+        })
+        .filter(Boolean);
+
+        setSelectedMembers(selected);
+        setSplitType(expense.splitType ?? "EQUAL");
+
+        const values = {};
+
+        (expense.splitMembers ?? []).forEach((splitMember) => {
+        const memberId = splitMember.memberId ?? splitMember.id;
+
+        values[memberId] = splitMember.percentage ?? "";
+        });
+
+        setPercentages(values);
+        setManualPercentages({});
+
+    }, [expense, memberOptions]);
+
+
+    function calculateEqualShares(amount, members) 
+    {
+        if (!members.length) return {};
+
+        const totalPaise = Math.round(Number(amount) * 100);
+
+        const equalShare = Math.floor(totalPaise / members.length);
+        const remainder = totalPaise % members.length;
+
+        const result = {};
+
+        members.forEach((member, index) => {
+            const share = equalShare + (index < remainder ? 1 : 0);
+
+            result[member.value] = share / 100;
+        });
+
+        return result;
+    }
+
+
+    function redistributePercentages(members, manualValues) 
+    {
+
+        const result = {};
+
+        
+        const manualIds = Object.keys(manualValues);
+
+       
+        const manualTotal = manualIds.reduce( (total, id) => total + Math.round(Number(manualValues[id]) * 100), 0);
+
+        
+        const remaining = 100 - manualTotal;
+
+        
+        const automaticMembers = members.filter( member => !manualIds.includes(String(member.value)));
+
+        
+        manualIds.forEach(id => { result[id] = Number(manualValues[id]);});
+
+        
+        if (automaticMembers.length > 0)
+        {
+
+            const equalShare = Math.floor(  remaining / automaticMembers.length);
+
+            const remainder = remaining % automaticMembers.length;
+
+            automaticMembers.forEach((member, index) => {
+
+                const share = equalShare + (index < remainder ? 1 : 0);
+
+                result[member.value] = share;
+
+            });
+
+        }
+
+        return result;
     }
 
   
@@ -144,11 +187,28 @@ export default function ExpenseForm({ members = [],expense = null, groupId,onCan
   {
         const selected = options ?? [];
 
-        setSelectedMembers(selected);
+        const isSelectAllClicked = selected.some((option) => option.value === "__select_all__");
+
+        const updatedMembers = isSelectAllClicked ? memberOptions : selected;
+
+        setSelectedMembers(updatedMembers);
+        
 
         if (splitType === "PERCENTAGE")
         {
-            setPercentages(calculateEqualPercentages(selected, payer?.value));
+             const selectedIds = updatedMembers.map(
+            member => String(member.value)
+        );
+
+        const updatedManual = Object.fromEntries(
+            Object.entries(manualPercentages).filter(
+                ([id]) => selectedIds.includes(id)
+            )
+        );
+
+        setManualPercentages(updatedManual);
+         setPercentages(redistributePercentages(updatedMembers, updatedManual));
+    
         }
 
         setErrors((previous) => ({
@@ -166,46 +226,69 @@ export default function ExpenseForm({ members = [],expense = null, groupId,onCan
 
         if (option)
         {
-            setSelectedMembers((previous) => {
-            const updated = previous.some(
-                (member) => member.value === option.value) ? previous : [...previous, option];
+            const updatedMembers = selectedMembers.some(member => member.value === option.value) ? selectedMembers : [...selectedMembers, option];
 
-            if (splitType === "PERCENTAGE")
+            setSelectedMembers(updatedMembers);
+
+            if (splitType === "PERCENTAGE") 
             {
-                setPercentages(calculateEqualPercentages(updated, option.value));
+
+                const selectedIds = updatedMembers.map(member => String(member.value));
+
+                const updatedManual = Object.fromEntries( Object.entries(manualPercentages).filter(([id]) => selectedIds.includes(id)));
+
+                setManualPercentages(updatedManual);
+
+                setPercentages(  redistributePercentages(updatedMembers, updatedManual) );
             }
-
-            return updated;
-            });
-
-        } else if (splitType === "PERCENTAGE") {
-            setPercentages(calculateEqualPercentages(selectedMembers, null));
         }
 
-        setErrors((previous) => ({
-            ...previous,
-            payerId: "",
-        }));
-        }
+        setErrors((previous) => ({...previous, payerId: "",}));
+    }
 
 
   
   function handlePercentageChange(memberId, value)
    {
-    setPercentages((previous) => ({
-      ...previous,
-      [memberId]: value,
-    }));
 
-    setErrors((previous) => ({
-      ...previous,
-      percentage: "",
-    }));
+     const newValue = value === "" ? 0 : Number(value);
+
+    
+    if (!Number.isFinite(newValue) || newValue < 0 || newValue > 100) {
+        return;
+    }
+
+    
+    const updatedManual = { ...manualPercentages, [memberId]: newValue};
+
+     const manualTotal = Object.values(updatedManual).reduce( (total, percentage) => total + Math.round(Number(percentage) * 100), 0);
+
+
+      const automaticMembers = selectedMembers.filter(
+        member => !Object.prototype.hasOwnProperty.call(
+            updatedManual,
+            String(member.value)
+        )
+    );
+
+
+
+     setManualPercentages(updatedManual);
+
+   
+    const updatedPercentages = redistributePercentages( selectedMembers, updatedManual);
+   
+
+     setPercentages(updatedPercentages);
+
+    setErrors(prev => ({...prev,percentage: ""}));
+   
   }
 
 
  
-  function handleSplitTypeChange(value) {
+    function handleSplitTypeChange(value) 
+    {
         setSplitType(value);
 
         setErrors((previous) => ({
@@ -213,10 +296,17 @@ export default function ExpenseForm({ members = [],expense = null, groupId,onCan
             percentage: "",
         }));
 
+        setManualPercentages({});
+
         if (value === "PERCENTAGE") {
-            setPercentages(calculateEqualPercentages(selectedMembers, payer?.value));
+
+            setPercentages( calculateEqualPercentages(selectedMembers));
+
+        } else {
+
+            setPercentages({});
         }
-        }
+    }
 
 
   
@@ -235,7 +325,7 @@ export default function ExpenseForm({ members = [],expense = null, groupId,onCan
       splitType,
       splitMembers: selectedMembers.map((member) => ({ id: member.value,
         ...(splitType === "PERCENTAGE"? {
-              percentage: Number(percentages[member.value]),
+              percentage: Number(percentages[member.value] || 0 ),
             }
           : {}),
       })),
@@ -247,10 +337,11 @@ export default function ExpenseForm({ members = [],expense = null, groupId,onCan
     setErrors(validationErrors);
     setErrorMessage("");
 
-    if (Object.keys(validationErrors).length > 0) {
-      return;
+    if (Object.keys(validationErrors).length > 0)
+    {
+        setErrors(validationErrors);
+        return;
     }
-
     setSubmitting(true);
 
     try {
@@ -422,26 +513,20 @@ export default function ExpenseForm({ members = [],expense = null, groupId,onCan
               </span>
             </div>
 
-            <div className="d-flex gap-2">
+            {/* <div className="d-flex gap-2">
               <Button type="button" size="small" variant="outline-primary"
                 onClick={() => handleMembersChange(memberOptions)}
                 disabled={selectedMembers.length === memberOptions.length} >
                 Select All
               </Button>
 
-              <Button   size="small"
-                variant="outline-secondary"
-                onClick={() => handleMembersChange([])}
-                disabled={selectedMembers.length === 0}
-              >
-                Clear All
-              </Button>
-            </div>
+
+            </div> */}
           </div>
 
           <Select
             isMulti
-            options={memberOptions}
+            options={optionsWithSelectAll}
             value={selectedMembers}
             onChange={handleMembersChange}
             placeholder="Search and select participants"
@@ -471,11 +556,11 @@ export default function ExpenseForm({ members = [],expense = null, groupId,onCan
             <h5 className="fw-semibold mb-3">Expense Split</h5>
 
             <SplitTable
-              members={selectedMembers}
-              amount={form.amount}
-              splitType={splitType}
-              percentages={percentages}
-              onPercentageChange={handlePercentageChange}
+                members={selectedMembers}
+                amount={form.amount}
+                splitType={splitType}
+                percentages={percentages}
+                onPercentageChange={handlePercentageChange}
             />
 
             {errors.percentage && (

@@ -336,7 +336,7 @@ export default function GroupsPage()
                             
 
                             
-                            <div className="col-12 col-lg-8">
+                            <div className="col-12 col-lg-8 ">
                                 <form onSubmit={(e) => {
                                     e.preventDefault();
                                     handleSearch();
@@ -347,8 +347,7 @@ export default function GroupsPage()
                                             minHeight: "46px"
                                         }}
                                     >
-                                        <input type="text"
-                                            
+                                        <input type="text"  
                                             className="form-control border-0 shadow-none ps-4"
                                             value={search}
                                             onChange={(e) => setSearch(e.target.value)}
@@ -357,11 +356,7 @@ export default function GroupsPage()
 
                                         
                                         {search.trim() && (
-                                            <Button                                                 
-                                                className="btn bg-white border-0 px-2"
-                                                onClick={handleClearSearch}
-                                                title="Clear search"
-                                            >
+                                            <Button   className="btn bg-white border-0 px-2"  onClick={handleClearSearch} title="Clear search" >
                                                 <i className="bi bi-x-circle text-secondary"></i>
                                             </Button>
                                         )}
@@ -376,10 +371,8 @@ export default function GroupsPage()
                             </div>
 
                         
-                            <div className="col-12 col-lg-4 d-flex justify-content-lg-end">
-                                <Button
-                                    type="button"
-                                    className="btn text-white rounded-pill px-4"
+                            <div className="col-12 col-lg-4      d-flex justify-content-end">
+                                <Button  className="btn text-white rounded-pill px-4"
                                     style={{
                                         backgroundColor: "#244B9B",
                                         minHeight: "46px"
@@ -395,7 +388,8 @@ export default function GroupsPage()
                                     ) : (
                                         <>
                                             <i className="bi bi-plus-lg me-2"></i>
-                                            Create Group
+                                            <span className="d-none d-sm-inline " >Create Group</span>
+                                            
                                         </>
                                     )}
                                 </Button>

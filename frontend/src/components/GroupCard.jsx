@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";    
 import { useNavigate } from "react-router-dom";
 import { getGroupVisual } from "../util/getGroupVisual";
 import Button from "./common/Button";
@@ -9,9 +9,31 @@ export default function GroupCard({ group, onEdit, onDelete })
 {
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef(null);
 
   const visual = getGroupVisual(group.name);
   const Icon = visual.icon;
+
+
+    useEffect(() => {
+        function handleOutsideClick(event)
+        {
+            if (menuRef.current && !menuRef.current.contains(event.target))
+            {
+                setShowMenu(false);
+            }
+
+        }
+
+            if (showMenu) 
+            {
+                document.addEventListener("mousedown", handleOutsideClick);
+            }
+        return () => {
+            document.removeEventListener("mousedown", handleOutsideClick);
+        };
+
+        }, [showMenu]);
 
 
     function formatDate(date) 
@@ -27,7 +49,7 @@ export default function GroupCard({ group, onEdit, onDelete })
 
     function handleOpenGroup() 
     {
-        console.log("Navigating to:", `/app/groups/${group.id}`);
+        
         navigate(`/app/groups/${group.id}`);
     }
 
@@ -52,7 +74,7 @@ export default function GroupCard({ group, onEdit, onDelete })
         )}
 
         
-        <div className="position-absolute top-0 end-0 m-3" data-no-card-navigation style={{ zIndex: 20 }} onClick={(e) => e.stopPropagation()}>
+        <div  ref={menuRef}  data-no-card-navigation className="position-absolute top-0 end-0 m-3" style={{ zIndex: 20 }} onClick={(e) => e.stopPropagation()}>
             <button type="button" className="btn btn-light btn-sm rounded-circle border-0 d-flex align-items-center justify-content-center shadow-sm"
                 style={{ width: "36px", height: "36px" }}
                 onClick={(e) => { e.stopPropagation();  setShowMenu(prev => !prev); }} >

@@ -1,16 +1,43 @@
 
-import { useState } from "react";
+import { useState, useRef,useEffect } from "react";
 import { Card } from "react-bootstrap";
 import { Users,UserRound,MoreVertical,Plus,ChevronRight } from "lucide-react";
 import Button from "../components/common/Button";
 
-export default function GroupMembers({members = [],  onAddMember, onRemoveMember,onViewAllMembers })
+export default function GroupMembers({members = [],  onAddMember, onRemoveMember })
  {
     const [activeMenu, setActiveMenu] = useState(null);
+    const menuRef = useRef(null);
 
-    const formatAmount = (amount) => `₹${Number(amount || 0).toFixed(2)}`;
 
-    function getInitials(name = "") {
+    useEffect(() => {
+        function handleOutsideClick(event)
+        {
+            if (menuRef.current && !menuRef.current.contains(event.target))
+            {
+                setActiveMenu(false);
+            }
+
+        }
+
+            if (activeMenu) 
+            {
+                document.addEventListener("mousedown", handleOutsideClick);
+            }
+        return () => {
+            document.removeEventListener("mousedown", handleOutsideClick);
+        };
+
+        }, [activeMenu]);
+
+
+     function formatAmount(value)
+    {
+        return Number(value ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2,});
+    }
+
+    function getInitials(name = "") 
+    {
         return name.split(" ").filter(Boolean).map(part => part[0]).join("").slice(0, 2).toUpperCase();
     }
 
@@ -50,6 +77,7 @@ export default function GroupMembers({members = [],  onAddMember, onRemoveMember
                 {members.map((member) => {
                     const memberId = member.memberId;
                     const balance = Number(member.balance || 0);
+                    // const balance = Number(member.totalShare || 0);
                     const name = member.memberName || "Unknown Member";
 
                     
@@ -67,7 +95,7 @@ export default function GroupMembers({members = [],  onAddMember, onRemoveMember
 
                                         {activeMenu === memberId && (                                           
 
-                                            <div className="position-absolute  end-0 mt-2 bg-white rounded-3 shadow border py-2"
+                                            <div ref={menuRef}  data-no-card-navigation className="position-absolute  end-0 mt-2 bg-white rounded-3 shadow border py-2"
                                                     style={{ width: "160px",zIndex: 10,}} onClick={e => e.stopPropagation()} >
                                                     
 
@@ -108,7 +136,7 @@ export default function GroupMembers({members = [],  onAddMember, onRemoveMember
                                         Share:{" "}
                                         <span className={`badge rounded-pill ${balance >= 0  ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger" }`}>
                                                
-                                            {balance > 0 ? `+${formatAmount(balance)}` : balance === 0 ? `${formatAmount(balance)}` :  `-${formatAmount(Math.abs(balance))}` }
+                                            {balance > 0 ? `${formatAmount(balance)}` : balance === 0 ? `${formatAmount(balance)}` :  `-${formatAmount(Math.abs(balance))}` }
                                             
                                         </span>
                                     </p>

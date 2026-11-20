@@ -20,11 +20,11 @@ export default function AddExpensePage({ onExpenseSaved }) {
         minHeight: "100vh",
       }}
     >
-      <div className="container-fluid px-5 py-1 py-md-3">
+      <div className="container-fluid px-5 py-1 py-md-2">
         <div className="container py-4">
           <ExpenseForm
             members={members}
-            groupId={groupId}
+            groupId={groupId}   
             onExpenseSaved={onExpenseSaved}
             onCancel={() => navigate(-1)}
           />

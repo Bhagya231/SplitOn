@@ -16,6 +16,7 @@ public interface ExpensesMapper
     @Mapping(source = "payer.id", target = "payerId")
     @Mapping(source = "payer.name", target = "payerName")
     @Mapping(source = "expense_groups.id", target = "groupId")
+    @Mapping(source = "expense_groups.name",target = "groupName")
     @Mapping(source = "splitMembers", target = "splitMembers")
     ExpensesResponse toResponse(Expenses expense);
 

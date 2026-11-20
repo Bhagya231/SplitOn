@@ -13,7 +13,7 @@ import {  Home } from "lucide-react";
 function BalancesPage() 
 {
 
-  const { balance, summary, groupName } = useLoaderData();
+  const { balance, summary, groupName, total } = useLoaderData();
 
 
 
@@ -35,7 +35,7 @@ function BalancesPage()
 
               <li className="breadcrumb-item">
                   <Link to={`/groups/${groupId}`} className="text-decoration-none text-secondary" >
-                      
+                      GroupDetails 
                   </Link>
               </li>
 
@@ -84,7 +84,7 @@ function BalancesPage()
             <table className="table  table-hover  align-middle">
               <thead className="table-secondary text-dark">
                 <tr>
-                  <th>#</th>
+                  <th>S.No</th>
                   <th>Member</th>
                   <th className="text-end">Total Paid</th>
                   <th className="text-end">Total Share</th>
@@ -112,12 +112,13 @@ function BalancesPage()
                         {formatCurrency(member.balance)}
                       </td>
 
-                      <td className="text-end fw-semibold">
-                          <Button className={member.balance > 0 ? 'bg-success-subtle' : member.balance < 0 ? 'bg-danger-subtle' : 'bg-dark-subtle' }>
-                            <span className={member.balance > 0 ? 'text-success' : member.balance < 0 ? 'text-danger' : '' }>
-                                {member.status}
-                            </span></Button>
-                      </td>
+                      <td className="text-end">
+                        <span
+                            className={`badge rounded-pill px-3 py-2 ${member.balance > 0 ? "bg-success-subtle text-success"
+                                  : member.balance < 0 ? "bg-danger-subtle text-danger" : "bg-secondary-subtle text-secondary" }`}>
+                            {member.balance > 0  ? "You are owed"  : member.balance < 0 ? "You owe"  : "Settled" }      
+                        </span>
+                    </td>
                     </tr>
                   );
                 })}

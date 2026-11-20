@@ -30,7 +30,7 @@ function ExpenseDetails()
 
    function money(value)
     {
-        return Number(value ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2,});
+        return Number(value ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2,});
     }
 
 
@@ -127,26 +127,26 @@ function ExpenseDetails()
                                 to="/app"
                                 className="text-decoration-none text-muted d-inline-flex align-items-center gap-1"
                             >
-                                <Home size={16} />
+                                <Home size={16}  />
                                 Groups
                             </Link>
                         </li>
 
-                        <li className="d-flex align-items-center mx-2">
+                        <li className="d-flex align-items-center mx-1">
                             <ChevronRight size={14} className="text-muted" />
                         </li>
 
                         <li className="breadcrumb-item">
-                             <Link  to={`/app/groups/${groupId}`} className="text-decoration-none text-muted d-inline-flex align-items-center gap-1">
-                                Group Details
+                             <Link  to={`/app/groups/${groupId}`} className="text-decoration-none breadcrumb-link d-inline-flex align-items-center gap-1">
+                                {expense.groupName}
                             </Link>
 
                         </li>
 
-                        <li className="d-flex align-items-center mx-2">
+                        <li className="d-flex align-items-center mx-1">
                             <ChevronRight size={14} className="text-muted" />
                         </li>
-                        <li className="breadcrumb-item active text-truncate">
+                        <li className="breadcrumb-item active text-primary text-truncate">
                             {expense?.title}
                         </li>
 
@@ -179,12 +179,13 @@ function ExpenseDetails()
 
                         <Button type="button" variant="primary" onClick={() => navigate(`/app/groups/${groupId}/expenses/${expense.id}/edit`, {state: { expense }, }) }>
                             <Pencil size={18} className="me-2" />
-                            Edit Expense
+                            <span className="d-none d-sm-inline">Edit Expense</span>
                         </Button>
 
                         <Button type="button" variant="danger" onClick={handleDeleteClick} >
                             <Trash2 size={18} className="me-2" />
-                            Delete Expense
+                            <span className="d-none d-sm-inline">Delete Expense</span>
+                            
                         </Button>
                 </div>
             </div>

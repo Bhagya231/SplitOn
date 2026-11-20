@@ -53,6 +53,8 @@ export function validateExpense(formData)
         }
     }
 
+   
+
     return errors;
 }
 

@@ -6,7 +6,7 @@ export default function ExpensePagination({ expensePage })
   const [searchParams, setSearchParams] = useSearchParams();
 
   
-    if ( !expensePage || expensePage.totalElements === 0 || expensePage.totalPages <= 1 )
+    if ( !expensePage || expensePage.totalElements === 0 || expensePage.totalPages <= 0 )
     {
         return null;
     }

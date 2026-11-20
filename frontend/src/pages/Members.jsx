@@ -128,11 +128,7 @@ function MembersPage()
         <div className="col-12">
 
           <div className="d-flex justify-content-end mx-4 mb-3">
-                <Button
-                    type="button"
-                    variant="primary"
-                    onClick={() => navigate("/expenses/add")}
-                >
+                <Button variant="primary"  onClick={() => navigate("/expenses/add")}>
                     + Add Expense
                 </Button>
             </div>

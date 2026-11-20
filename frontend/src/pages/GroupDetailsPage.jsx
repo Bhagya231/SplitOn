@@ -74,7 +74,7 @@ export default function GroupDetailsPage() {
     const currentBalance = balances.find(  item => item.memberId === currentMemberId );
 
     
-   const membersWithBalances = (group?.groupMembers || []).map(member => {
+    const membersWithBalances = (group?.groupMembers || []).map(member => {
 
         const balance = balances.find( item => item.memberId === member.memberId );
 
@@ -227,7 +227,7 @@ export default function GroupDetailsPage() {
                             <ChevronRight size={14} className="text-muted" />
                         </li>
 
-                        <li className="breadcrumb-item active text-truncate">
+                        <li className="breadcrumb-item active text-truncate text-primary">
                             {group?.name}
                         </li>
 
