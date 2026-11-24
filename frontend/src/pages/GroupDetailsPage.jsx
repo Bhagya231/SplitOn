@@ -202,22 +202,22 @@ export default function GroupDetailsPage() {
     // }
 
     return (
-        <div className="container-fluid py-2 px-0"
-            style={{
-                backgroundImage: `url(${bg})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                backgroundRepeat: "no-repeat",
-                minHeight: "100vh"
-            }}
-        >
+        // <div className="container-fluid py-2 px-0"
+        //     style={{
+        //         backgroundImage: `url(${bg})`,
+        //         backgroundSize: "cover",
+        //         backgroundPosition: "center",
+        //         backgroundRepeat: "no-repeat",
+        //         minHeight: "100vh"
+        //     }}
+        // >
             <div className="container-fluid px-5 py-1 py-md-3">
 
                 <nav aria-label="breadcrumb" className="mb-4">
                     <ol className="breadcrumb align-items-center mb-0">
 
                         <li className="breadcrumb-item">
-                            <Link to="/app"  className="text-decoration-none text-muted d-inline-flex align-items-center gap-1"  >
+                            <Link to="/app"  className="text-decoration-none breadcrumb-link d-inline-flex align-items-center gap-1"  >
                                 <Home size={16} />
                                 Groups
                             </Link>
@@ -288,10 +288,7 @@ export default function GroupDetailsPage() {
                                     </p>
                                 </div>
 
-                                <Button
-                                    type="button"
-                                    className="btn btn-primary btn-sm"
-                                    onClick={handleOpenAddExpense} >
+                                <Button className="btn btn-primary btn-sm ms-auto" onClick={handleOpenAddExpense} >  
                                     + Add Expense
                                 </Button>
 
@@ -372,6 +369,6 @@ export default function GroupDetailsPage() {
                 />
 
             </div>
-        </div>
+        // </div>
     );
 }

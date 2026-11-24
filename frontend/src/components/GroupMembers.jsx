@@ -76,8 +76,8 @@ export default function GroupMembers({members = [],  onAddMember, onRemoveMember
             <div className="row g-3 d-none d-md-flex">
                 {members.map((member) => {
                     const memberId = member.memberId;
-                    const balance = Number(member.balance || 0);
-                    // const balance = Number(member.totalShare || 0);
+                    // const balance = Number(member.balance || 0);
+                    const balance = Number(member.totalShare || 0);
                     const name = member.memberName || "Unknown Member";
 
                     
@@ -160,7 +160,7 @@ export default function GroupMembers({members = [],  onAddMember, onRemoveMember
 
                     {members.map((member) => {
                         const memberId = member.memberId;
-                        const balance = Number(member.balance || 0);
+                        const balance = Number(member.totalShare || 0);
                         const name = member.memberName || "Unknown Member";
 
                         return (
@@ -200,7 +200,7 @@ export default function GroupMembers({members = [],  onAddMember, onRemoveMember
 
                                             {activeMenu === memberId && (
                                                 <div  className="position-absolute end-0 mt-2 bg-white rounded-3 shadow border py-2"  style={{ width: "160px", zIndex: 10 }} >
-                                                    <Button type="button" className="btn btn-sm w-100 text-start text-danger px-3 py-2 border-0 rounded-0" 
+                                                    <Button variant="light" className="btn btn-sm w-100 text-start btn-outline-danger px-3 py-2 border-0 rounded-0" 
                                                         onClick={() => { setActiveMenu(null); onRemoveMember?.(member); }}>
                                                         <i className="bi bi-trash me-2" />
                                                         Delete Member
@@ -211,35 +211,25 @@ export default function GroupMembers({members = [],  onAddMember, onRemoveMember
                                         </div>
                                     </div>
 
-                                    <hr className="my-3" />
+                                    <hr className="my-2" />
 
-                                    <div className="d-flex justify-content-between align-items-center gap-2">
+                                    <div className="d-flex align-items-center gap-5">
 
-                                        <div>
-                                            <small className="text-secondary d-block">
-                                                Paid
-                                            </small>
-                                            <strong className="small">
-                                                {formatAmount(member.paidAmount)}
-                                            </strong>
-                                        </div>
+                                        <p className="small mb-0 mx-2">
+                                            Paid: <strong>{formatAmount(member.paidAmount)}</strong>
+                                        </p>
 
-                                        <div className="text-end">
-                                            <small className="text-secondary d-block">
-                                                Share
-                                            </small>
-
-                                            <span
-                                                className={`badge rounded-pill ${balance >= 0 ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger" }`}  >
-                                                {balance > 0 ? `+${formatAmount(balance)}` : balance === 0 ? formatAmount(balance)  : `-${formatAmount(Math.abs(balance))}`}
-         
+                                        <p className="small  mb-0">
+                                            Share:{" "}
+                                            <span className={`badge rounded-pill ${balance >= 0 ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger" }`}>
+                                                {balance   }
                                             </span>
-                                        </div>
+                                        </p>
 
                                     </div>
 
                                     
-                                    <div className="d-flex justify-content-end mt-3">
+                                    <div className="d-flex justify-content-center mt-3">
                                 <Button variant="light" className="btn btn-sm btn-outline-primary rounded-pill px-3 d-inline-flex align-items-center gap-1"
                                             onClick={() => handleViewMember(member)}  >
                                             View Details

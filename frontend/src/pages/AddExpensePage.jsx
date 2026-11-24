@@ -9,6 +9,16 @@ export default function AddExpensePage({ onExpenseSaved }) {
 
   const { members, groupId } = useLoaderData();
 
+  function handleCancel()
+   {
+        if (window.history.length > 1) 
+        {
+            navigate(-1);
+        } else {
+            navigate(`/app/groups/${groupId}`); 
+        }
+    };
+
   return (
     <div
       className="container-fluid py-2 px-0"
@@ -20,13 +30,13 @@ export default function AddExpensePage({ onExpenseSaved }) {
         minHeight: "100vh",
       }}
     >
-      <div className="container-fluid px-5 py-1 py-md-2">
+      <div className="container-fluid px-ls-5 px-md-2 py-1 py-md-2">
         <div className="container py-4">
           <ExpenseForm
             members={members}
             groupId={groupId}   
             onExpenseSaved={onExpenseSaved}
-            onCancel={() => navigate(-1)}
+            onCancel={handleCancel}
           />
         </div>
       </div>

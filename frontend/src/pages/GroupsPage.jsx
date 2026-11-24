@@ -347,8 +347,7 @@ export default function GroupsPage()
                                             minHeight: "46px"
                                         }}
                                     >
-                                        <input type="text"  
-                                            className="form-control border-0 shadow-none ps-4"
+                                        <input type="text"  className="form-control border-0 shadow-none ps-4"                      
                                             value={search}
                                             onChange={(e) => setSearch(e.target.value)}
                                             placeholder="Search groups by name..."

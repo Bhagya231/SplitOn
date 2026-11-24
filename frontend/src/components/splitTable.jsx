@@ -1,13 +1,17 @@
 
+
 import FormInput from "./common/FormInput";
+import { RefreshCw } from "lucide-react";
+import Button from "./common/Button";
 
 
 
-export default function SplitTable({members = [],amount = 0,splitType,percentages = {},onPercentageChange})
+export default function SplitTable({members = [],amount = 0,splitType,manualPercentages = {},percentages = {},payerId,onPercentageChange,onSplitEqually})
 {
 
 
-    function money(value) {
+    function money(value) 
+    {
         return Number(value ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 0,  maximumFractionDigits: 2,});
     }
 
@@ -16,42 +20,67 @@ export default function SplitTable({members = [],amount = 0,splitType,percentage
         return Number(value ?? 0).toLocaleString("en-IN", {  minimumFractionDigits: 0, maximumFractionDigits: 2 });
     }
 
+    
 
-    const totalPercentage = members.reduce((total, member) =>total + (Number(percentages[member.value]) || 0),0 );
+    const totalPercentageUnits = members.reduce((total, member) => total + Math.round( (Number(percentages[member.value]) || 0) * 100 ),0);
 
-    function getShare(member) 
+    const totalPercentage = totalPercentageUnits / 100;
+
+    const isPercentageInvalid = totalPercentageUnits !== 10000;
+
+    const hasManualChanges = Object.keys(manualPercentages).length > 0;
+
+    function getShare(member, index)
     {
-        const totalAmount = Number(amount) || 0;
+        const totalAmount = Math.round((Number(amount) || 0) * 100);
 
         if (splitType === "EQUAL") 
         {
-            return members.length ? totalAmount / members.length : 0;
+            if (members.length === 0) return 0;
+
+            const baseShare = Math.floor(totalAmount / members.length);
+            const remainder = totalAmount % members.length;
+
+            return (baseShare + (index < remainder ? 1 : 0)) / 100;
         }
 
-        return totalAmount * (Number(percentages[member.value]) || 0) / 100;
+        return ((Number(amount) || 0) * (Number(percentages[member.value]) || 0) / 100);
     }
 
-     const totalShare = members.reduce( (total, member) => total + getShare(member), 0);
+     const totalShare = members.reduce( (total, member, index) => total + getShare(member, index),0 );
 
 
     return (
-        <div className="mt-3">
+        <div className="mt-4">
              {members.length > 0 && (
 
                 <>
-                     <h5 className="fw-semibold mb-3">
+                    <div className="d-flex  align-items-center justify-content-between mb-3">
+
+                        <h5 className="fw-semibold mb-2">
                             Expense Split
                         </h5>
 
-               
+                         {splitType === "PERCENTAGE" && (
 
-                
+                            <Button variant="white" className= {`btn btn-sm  d-flex align-items-center gap-1 ${hasManualChanges ? "btn-outline-primary" : "btn-light text-secondary"}`} 
+                                disabled={!hasManualChanges} onClick={onSplitEqually} >
+                                
+                                <RefreshCw size={14} />
+                                <span>Split Equally</span>
+                            </Button>
+
+                        )}
+
+                    </div>
+                   
+
            
             <div   className="table-responsive border rounded-3"  style={{maxHeight: "320px", overflowY: "auto" }} >
 
                 
                 <table className="table table-hover align-middle mb-0">
-                    <thead className="table-light"   style={{ position: "sticky", top: 0,zIndex: 2}} >
+                    <thead className="table-light"   style={{ position: "sticky", top: 0,zIndex: 0}} >
                         <tr>
                             <th style={{ width: splitType === "PERCENTAGE" ? "40%" : "55%" }}>Participant</th>
                             {splitType === "PERCENTAGE" && (
@@ -64,45 +93,78 @@ export default function SplitTable({members = [],amount = 0,splitType,percentage
                     </thead>
 
                     <tbody>
-                        {members.map(member => (
-                            <tr key={member.value}>
-                                <td className="text-break" style={{ maxWidth: "220px" }}>
-                                    {member.label}
-                                </td>
+                        {members.map((member,index) => {
 
-                                {splitType === "PERCENTAGE" && (
-                                    <td >
-                                        <div className="input-group input-group-sm">
-                                            <FormInput
-                                                type="number"
-                                                className="form-control"
-                                                min="0"
-                                                max="100"
-                                                step="0.01"
-                                                value={percentages[member.value] ?? ""}
-                                                onChange={event => onPercentageChange(member.value,event.target.value)}         
-                                            />
-                                            <span className="mt-2"> %</span>
+                            const isPayer = member.value === payerId;
+
+
+                            console.log("member", member.value , " payer",payerId );
+
+                            console.log("is payer",isPayer);
+
+                            const isManual = Object.hasOwn(manualPercentages, member.value);
+
+                            const percentage = Number(percentages[member.value]) || 0;
+
+                            const isAutomaticZero = !isManual && percentage === 0;
+
+                            return (
+
+                                <tr key={member.value}>
+
+                                    <td className="text-break" style={{ maxWidth: "220px" }}>
+                                      <div className="d-flex align-items-center gap-2">
+                                            <span>{member.label}</span>
+
+                                            {isPayer && (
+                                                <span className="badge bg-primary-subtle text-primary rounded-pill">
+                                                    Payer
+                                                </span>
+                                            )}
                                         </div>
                                     </td>
-                                )}
 
-                                <td className="text-end text-nowrap">
-                                    ₹{ money(getShare(member))}
-                                </td>
-                            </tr>
-                        ))}
+                                    {splitType === "PERCENTAGE" && (
+                                        <td >
+                                            {/* <div className="input-group input-group-sm"> */}
+                                            <div className="position-relative" style={{ width: "75px" }}>
+                                                <FormInput
+                                                    type="number"
+                                                    className={`form-control form-control-sm pe-4 no-spinner ${ isAutomaticZero ? "bg-light text-secondary" : "" }`}
+                                                    
+                                                    min="0"
+                                                    margin="mb-0"
+                                                    max="100"
+                                                    step="0.01"
+                                                    value={percentages[member.value] ?? ""}
+                                                    onChange={event => onPercentageChange(member.value,event.target.value)}          
+                                                />
+                                                <span className={`position-absolute top-50 end-0 translate-middle-y pe-2 text-muted ${isAutomaticZero ? "bg-light text-secondary" : ""} `} style={{ pointerEvents: "none" }}> %</span>
 
-                       
-                    </tbody>
+                                            </div>
+                                        </td>
+                                    )}
+
+                                     
+
+                                    <td className="text-end text-nowrap">
+                                        ₹{money(getShare(member,index))}
+                                    </td>
+
+                                </tr>
+                            );
+                         })}
+
+                 </tbody>
+                            
 
                      <tfoot  className="table-light fw-bold" style={{  position: "sticky", bottom: 0,  zIndex: 2 }}  >
                         <tr>
                             <td>Total </td>
                             {splitType === "PERCENTAGE" && (
                                 <td> 
-                                    <span className={ totalPercentage === 100 ? "text-success" : "text-danger" }>
-                                        {totalPercentage.toFixed(2)}%
+                                    <span className={ !isPercentageInvalid  ? "text-success" : "text-danger" }>
+                                        {formatPercentage(totalPercentage)}%
                                     </span>
                                 </td>
                             )}
@@ -111,9 +173,22 @@ export default function SplitTable({members = [],amount = 0,splitType,percentage
                                 ₹{money(totalShare)}
                             </td>
                         </tr>
+
+                        
                     </tfoot>
-                </table>
+                            
+                </table>  
             </div>
+
+
+            {splitType === "PERCENTAGE" && isPercentageInvalid && (
+                    <div className="text-danger small mt-2">
+                        {totalPercentageUnits > 10000 ? "Total percentage cannot exceed 100%." : "Total percentage must equal 100%."}
+                            
+                            
+                    </div>
+                )}
+
              </>
              )}
 

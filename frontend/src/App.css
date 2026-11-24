@@ -1,17 +1,30 @@
+
+
+body {
+  background-image: url("./assets/bg.png");
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-attachment: fixed; 
+  min-height: 100vh;
+  margin: 0;
+}
+
+
 .bg-purple-subtle {
-    background-color: #e8dcf7 !important;
+    background-color: #e8dcf7 ;
 }
 
 .bg-purple {
-    background-color: #9333EA !important;
+    background-color: #9333EA ;
 }
 
 .bg-purple-soft {
-    background-color: #e5d6f7 !important;
+    background-color: #e5d6f7;
 }
 
 .text-purple {
-    color: #9333EA !important;
+    color: #9333EA ;
 }
 
 .breadcrumb-link {
@@ -20,7 +33,20 @@
 }
 
 .breadcrumb-link:hover {
-  color: var(--bs-primary) !important; 
-  text-decoration: underline !important; 
+  color: var(--bs-primary) ; 
+  text-decoration: underline ; 
 }
 
+
+
+.no-spinner::-webkit-outer-spin-button,
+.no-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+
+.no-spinner {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}

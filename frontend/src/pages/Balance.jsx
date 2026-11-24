@@ -2,8 +2,9 @@
 import { useLoaderData , Link,useParams } from "react-router-dom";
 import Card from "../components/common/Card";
 import {formatCurrency} from "../util/formatCurrency";
-import Button from "../components/common/Button";
+
 import BalanceChart from "../components/BalanceChart";
+import { ChevronRight } from "lucide-react"
 
 
 import {  Home } from "lucide-react";
@@ -26,20 +27,28 @@ function BalancesPage()
 
           <ol className="breadcrumb align-items-center mb-2">
 
-              <li className="breadcrumb-item">
-                  <Link to="/app" className="text-decoration-none text-secondary d-flex align-items-center gap-1" >
+              <li className="breadcrumb-item ">
+                  <Link to="/app" className="text-decoration-none breadcrumb-link d-flex align-items-center gap-1" >
                       <Home size={16} />
                       Groups
                   </Link>
               </li>
 
-              <li className="breadcrumb-item">
-                  <Link to={`/groups/${groupId}`} className="text-decoration-none text-secondary" >
+              <li className="d-flex align-items-center mx-2">
+                            <ChevronRight size={14} className="text-muted" />
+                        </li>
+
+              <li className="breadcrumb-item ">
+                  <Link to={`/app/groups/${groupId}`} className="text-decoration-none breadcrumb-link" >
                       GroupDetails 
                   </Link>
               </li>
 
-              <li className="breadcrumb-item active fw-semibold" aria-current="page">
+              <li className="d-flex align-items-center mx-2">
+                            <ChevronRight size={14} className="text-muted" />
+                        </li>
+
+              <li className="breadcrumb-item active fw-bold" aria-current="page">
                   Balance Sheet
               </li>
 
@@ -116,7 +125,7 @@ function BalancesPage()
                         <span
                             className={`badge rounded-pill px-3 py-2 ${member.balance > 0 ? "bg-success-subtle text-success"
                                   : member.balance < 0 ? "bg-danger-subtle text-danger" : "bg-secondary-subtle text-secondary" }`}>
-                            {member.balance > 0  ? "You are owed"  : member.balance < 0 ? "You owe"  : "Settled" }      
+                            {member.balance > 0  ? " owed"  : member.balance < 0 ? "owe"  : "Settled" }      
                         </span>
                     </td>
                     </tr>
@@ -131,7 +140,7 @@ function BalancesPage()
       <Card  title="Net Balance per Member">
         <div className="container-fluid">
       <div className="row">
-        <div className="col-12">
+        <div className="col-12" style={{overflowX: "auto"}}>
           <BalanceChart members= {balance} />
         </div>
       </div>

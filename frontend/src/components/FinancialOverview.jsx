@@ -31,7 +31,7 @@ export default function FinancialOverview({ totalExpenses = 0,yourContribution =
             color: "text-success"
         },
         {
-            title: "Your Share",
+            title: "Net Balance",
             amount: Math.abs(yourBalance),
             icon: Scale,
             decoration: Scale,

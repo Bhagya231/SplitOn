@@ -105,15 +105,15 @@ function ExpenseDetails()
        
     return (
 
-         <div  className="container-fluid py-2 px-0"
-                    style={{
-                        backgroundImage: `url(${bg})`,
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                        backgroundRepeat: "no-repeat",
-                        minHeight: "100vh"
-                    }}
-                >
+        //  <div  className="container-fluid py-2 px-0"
+        //             style={{
+        //                 backgroundImage: `url(${bg})`,
+        //                 backgroundSize: "cover",
+        //                 backgroundPosition: "center",
+        //                 backgroundRepeat: "no-repeat",
+        //                 minHeight: "100vh"
+        //             }}>
+
         <div className="container  px-md-4 py-3">
 
 
@@ -125,7 +125,7 @@ function ExpenseDetails()
                         <li className="breadcrumb-item">
                             <Link
                                 to="/app"
-                                className="text-decoration-none text-muted d-inline-flex align-items-center gap-1"
+                                className="text-decoration-none breadcrumb-link d-inline-flex align-items-center gap-1"
                             >
                                 <Home size={16}  />
                                 Groups
@@ -402,7 +402,7 @@ function ExpenseDetails()
 
 
         </div>
-        </div>
+        // </div>
     );
 }
 

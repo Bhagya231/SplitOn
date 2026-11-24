@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-function FormInput({label, inputType = 'input', name,step,type = 'text',value, onChange,placeholder,error,className = '',disabled = false,readOnly = false,required = false,rows = 3,min})
+function FormInput({label, inputType = 'input', name,step,type = 'text',value, onChange,placeholder,error,className = '',disabled = false,readOnly = false,required = false,rows = 3,min,max, margin = 'mb-3'})
  {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -10,7 +10,7 @@ function FormInput({label, inputType = 'input', name,step,type = 'text',value, o
   const inputClasses = `form-control ${error ? 'is-invalid' : ''} ${className}`.trim();
 
   return (
-    <div className="mb-3">
+    <div className={margin}>
       {label && (
         <label htmlFor={name} className="form-label fw-semibold">
           {label}
@@ -40,6 +40,7 @@ function FormInput({label, inputType = 'input', name,step,type = 'text',value, o
             value={value}
             onChange={onChange}
             min={min}
+            max={max}
             step={step}
             placeholder={placeholder}
             className={`${inputClasses} ${isPassword ? 'pe-5' : ''}`.trim()}
