@@ -1,6 +1,7 @@
 package com.example.demo.dto;
 
 import com.example.demo.enums.SplitType;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -33,6 +34,6 @@ public class ExpensesRequest
 
 
     @NotEmpty(message = "At least one split member is required")
-    private Set<SplitMemberRequest> splitMembers;
+    private Set<@Valid SplitMemberRequest> splitMembers;
 
 }

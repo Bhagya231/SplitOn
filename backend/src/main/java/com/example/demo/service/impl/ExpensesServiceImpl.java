@@ -48,8 +48,6 @@ public class ExpensesServiceImpl implements ExpensesService
             log.info("Started adding expense: {}", request.getTitle());
 
 
-            validateSplitRequests(request);
-
             UUID payerId = request.getPayerId();
 
             Map<UUID, Members> memberMap = getActiveMembersMap(request.getSplitMembers(), payerId, group);
@@ -339,8 +337,6 @@ public class ExpensesServiceImpl implements ExpensesService
         log.info("Started updating expense: {}", expense.getId());
 
 
-        validateSplitRequests(request);
-
         Groups group = expense.getExpense_groups();
         UUID payerId = request.getPayerId();
 
@@ -437,40 +433,6 @@ public class ExpensesServiceImpl implements ExpensesService
     }
 
 
-
-
-
-
-    private void validateSplitRequests(ExpensesRequest request)
-    {
-
-        if (request.getSplitMembers() == null || request.getSplitMembers().isEmpty())
-        {
-            log.warn("At least one split member is required {} ",request.getSplitMembers());
-            throw new BadRequestException("At least one split member is required");
-        }
-
-        Set<UUID> memberIds = new HashSet<>();
-
-        for (SplitMemberRequest split : request.getSplitMembers())
-        {
-
-            if (split.getId() == null)
-            {
-                log.warn("split member ID is required {}",split);
-                throw new BadRequestException("Split member ID is required");
-            }
-
-            if (!memberIds.add(split.getId()))
-            {
-                log.warn("Duplicate split members are not allowed {}",split.getId());
-                throw new BadRequestException("Duplicate split members are not allowed");
-            }
-        }
-    }
-
-
-
     private Map<UUID, Members> getActiveMembersMap(Set<SplitMemberRequest> splitRequests, UUID payerId, Groups group)
     {
 
@@ -507,22 +469,19 @@ public class ExpensesServiceImpl implements ExpensesService
 
         Map<UUID, BigDecimal> shares = new LinkedHashMap<>();
 
-        BigDecimal totalAmount = amount.setScale(2, RoundingMode.HALF_UP);
+        BigDecimal totalAmount = amount.setScale(2, RoundingMode.UNNECESSARY);
 
         if (splitType == SplitType.EQUAL)
         {
 
-            BigDecimal equalShare = totalAmount.divide(BigDecimal.valueOf(splitRequests.size()), 2, RoundingMode.DOWN);
-
             for (SplitMemberRequest split : splitRequests)
             {
-                shares.put(split.getId(), equalShare);
+                shares.put(split.getId(),split.getAmount().setScale(2, RoundingMode.UNNECESSARY));
             }
 
         } else if (splitType == SplitType.PERCENTAGE)
         {
 
-            validatePercentages(splitRequests);
 
             for (SplitMemberRequest split : splitRequests)
             {
@@ -534,52 +493,29 @@ public class ExpensesServiceImpl implements ExpensesService
                 shares.put(split.getId(), share);
             }
 
+            BigDecimal calculatedTotal = shares.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            BigDecimal difference = totalAmount.subtract(calculatedTotal);
+
+            if (difference.compareTo(BigDecimal.ZERO) != 0)
+            {
+
+                UUID adjustmentMember = shares.containsKey(payerId) ? payerId : shares.keySet().iterator().next();
+
+                shares.put(adjustmentMember, shares.get(adjustmentMember).add(difference));
+            }
+
         } else {
             throw new BadRequestException("Invalid split type");
         }
 
 
-        BigDecimal calculatedTotal = shares.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal difference = totalAmount.subtract(calculatedTotal);
-
-        if (difference.compareTo(BigDecimal.ZERO) != 0)
-        {
-
-            UUID adjustmentMember = shares.containsKey(payerId) ? payerId : shares.keySet().iterator().next();
-
-            shares.put(adjustmentMember, shares.get(adjustmentMember).add(difference));
-        }
 
         return shares;
     }
 
 
-
-    private void validatePercentages(Set<SplitMemberRequest> splitRequests)
-    {
-
-        BigDecimal totalPercentage = BigDecimal.ZERO;
-
-        for (SplitMemberRequest split : splitRequests)
-        {
-
-            BigDecimal percentage = split.getPercentage();
-
-            if (percentage == null || percentage.compareTo(BigDecimal.ZERO) < 0 || percentage.compareTo(BigDecimal.valueOf(100)) > 0)
-            {
-
-                throw new BadRequestException("Percentage must be between 0 and 100");
-            }
-
-            totalPercentage = totalPercentage.add(percentage);
-        }
-
-        if (totalPercentage.compareTo(BigDecimal.valueOf(100)) != 0)
-        {
-            throw new BadRequestException("Total split percentage must be exactly 100");
-        }
-    }
 
 
 

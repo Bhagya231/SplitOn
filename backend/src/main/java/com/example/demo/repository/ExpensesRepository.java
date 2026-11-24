@@ -64,4 +64,7 @@ public interface ExpensesRepository extends JpaRepository<Expenses, UUID>
     List<Expenses> getAllExpensesByGroupId(@Param("groupId") String groupId);
 
 
+
+
+
 }

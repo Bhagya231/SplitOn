@@ -6,7 +6,8 @@ import Button from "./common/Button";
 
 
 
-export default function SplitTable({members = [],amount = 0,splitType,manualPercentages = {},percentages = {},payerId,onPercentageChange,onSplitEqually})
+export default function SplitTable({members = [],amount = 0,splitType,manualPercentages = {},editingPercentages = {},percentages = {},payerId,onPercentageChange,onSplitEqually,
+            amounts = {}, manualAmounts = {},editingAmounts = {},onAmountChange})           
 {
 
 
@@ -28,23 +29,21 @@ export default function SplitTable({members = [],amount = 0,splitType,manualPerc
 
     const isPercentageInvalid = totalPercentageUnits !== 10000;
 
-    const hasManualChanges = Object.keys(manualPercentages).length > 0;
+    const hasManualChanges = splitType === "EQUAL" ? Object.keys(manualAmounts).length > 0 : Object.keys(manualPercentages).length > 0;
+    
+    
 
-    function getShare(member, index)
-    {
-        const totalAmount = Math.round((Number(amount) || 0) * 100);
+   function getShare(member) 
+   {
 
         if (splitType === "EQUAL") 
         {
-            if (members.length === 0) return 0;
-
-            const baseShare = Math.floor(totalAmount / members.length);
-            const remainder = totalAmount % members.length;
-
-            return (baseShare + (index < remainder ? 1 : 0)) / 100;
+            return (amounts[member.value] ?? 0) / 100;
         }
 
-        return ((Number(amount) || 0) * (Number(percentages[member.value]) || 0) / 100);
+        return (
+            (Number(amount) || 0) * (Number(percentages[member.value]) || 0) / 100
+        );
     }
 
      const totalShare = members.reduce( (total, member, index) => total + getShare(member, index),0 );
@@ -61,8 +60,6 @@ export default function SplitTable({members = [],amount = 0,splitType,manualPerc
                             Expense Split
                         </h5>
 
-                         {splitType === "PERCENTAGE" && (
-
                             <Button variant="white" className= {`btn btn-sm  d-flex align-items-center gap-1 ${hasManualChanges ? "btn-outline-primary" : "btn-light text-secondary"}`} 
                                 disabled={!hasManualChanges} onClick={onSplitEqually} >
                                 
@@ -70,7 +67,7 @@ export default function SplitTable({members = [],amount = 0,splitType,manualPerc
                                 <span>Split Equally</span>
                             </Button>
 
-                        )}
+                        
 
                     </div>
                    
@@ -86,7 +83,7 @@ export default function SplitTable({members = [],amount = 0,splitType,manualPerc
                             {splitType === "PERCENTAGE" && (
                                 <th style={{ width: "30%" }}>Percentage</th>
                             )}
-                            <th className="text-end"  style={{ width: splitType === "PERCENTAGE" ? "30%" : "45%" }}>
+                            <th className="text-end"  style={{ width: splitType === "PERCENTAGE" ? "10%" : "7%" }}>
                                 Share
                             </th>
                         </tr>
@@ -107,6 +104,9 @@ export default function SplitTable({members = [],amount = 0,splitType,manualPerc
                             const percentage = Number(percentages[member.value]) || 0;
 
                             const isAutomaticZero = !isManual && percentage === 0;
+                            const isAutomaticZeroValue =  !isManual && amount === 0;
+
+                        
 
                             return (
 
@@ -130,13 +130,17 @@ export default function SplitTable({members = [],amount = 0,splitType,manualPerc
                                             <div className="position-relative" style={{ width: "75px" }}>
                                                 <FormInput
                                                     type="number"
-                                                    className={`form-control form-control-sm pe-4 no-spinner ${ isAutomaticZero ? "bg-light text-secondary" : "" }`}
+                                                    className={`form-control form-control-sm pe-4  no-spinner ${ isAutomaticZeroValue ? "bg-light text-secondary" : "" }`}
                                                     
                                                     min="0"
                                                     margin="mb-0"
                                                     max="100"
                                                     step="0.01"
-                                                    value={percentages[member.value] ?? ""}
+                                                    value={
+                                                        Object.hasOwn(editingPercentages, member.value)
+                                                            ? editingPercentages[member.value]
+                                                            : percentages[member.value] ?? ""
+                                                    }
                                                     onChange={event => onPercentageChange(member.value,event.target.value)}          
                                                 />
                                                 <span className={`position-absolute top-50 end-0 translate-middle-y pe-2 text-muted ${isAutomaticZero ? "bg-light text-secondary" : ""} `} style={{ pointerEvents: "none" }}> %</span>
@@ -145,11 +149,34 @@ export default function SplitTable({members = [],amount = 0,splitType,manualPerc
                                         </td>
                                     )}
 
-                                     
-
+                                    
                                     <td className="text-end text-nowrap">
-                                        ₹{money(getShare(member,index))}
+
+                                         {splitType === "EQUAL" ? (
+
+                                            <FormInput
+                                                type="number"
+                                                min="0"
+                                                className={`form-control form-control-sm  no-spinner ${ isAutomaticZero ? "bg-light text-secondary" : "" }`}
+                                                step="0.01"
+                                                margin="mb-0"
+                                                value={ Object.hasOwn(editingAmounts, member.value) ? editingAmounts[member.value] : ((amounts[member.value] ?? 0) / 100)}
+                                                onChange={event =>  onAmountChange(member.value, event.target.value) }
+                                            />
+
+                                         ) : (
+                                            `₹${money(getShare(member))}`
+                                         ) }
+                        
+
+
                                     </td>
+                                     
+                                    
+
+                                    {/* <td className="text-end text-nowrap">
+                                        ₹{money(getShare(member,index))}
+                                    </td> */}
 
                                 </tr>
                             );
@@ -158,7 +185,7 @@ export default function SplitTable({members = [],amount = 0,splitType,manualPerc
                  </tbody>
                             
 
-                     <tfoot  className="table-light fw-bold" style={{  position: "sticky", bottom: 0,  zIndex: 2 }}  >
+                     <tfoot  className="table-light fw-bold" style={{  position: "sticky", bottom: 0,  zIndex: 0 }}  >
                         <tr>
                             <td>Total </td>
                             {splitType === "PERCENTAGE" && (
@@ -180,9 +207,11 @@ export default function SplitTable({members = [],amount = 0,splitType,manualPerc
                 </table>  
             </div>
 
+                
 
             {splitType === "PERCENTAGE" && isPercentageInvalid && (
                     <div className="text-danger small mt-2">
+                        
                         {totalPercentageUnits > 10000 ? "Total percentage cannot exceed 100%." : "Total percentage must equal 100%."}
                             
                             

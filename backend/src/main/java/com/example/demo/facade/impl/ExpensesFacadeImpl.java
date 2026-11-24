@@ -3,9 +3,11 @@ package com.example.demo.facade.impl;
 import com.example.demo.dto.BalanceResponse;
 import com.example.demo.dto.ExpensesRequest;
 import com.example.demo.dto.ExpensesResponse;
+import com.example.demo.dto.SplitMemberRequest;
 import com.example.demo.entity.Expenses;
 import com.example.demo.entity.Groups;
 import com.example.demo.entity.Members;
+import com.example.demo.enums.SplitType;
 import com.example.demo.exceptions.BadRequestException;
 import com.example.demo.facade.api.ExpenseFacade;
 import com.example.demo.repository.ExpensesRepository;
@@ -24,7 +26,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -51,6 +55,8 @@ public class ExpensesFacadeImpl implements ExpenseFacade
             Members member = getLoggedInMember();
 
             checkGroupMembers(group, member);
+
+            validateSplitRequest(request);
 
             return expensesService.addExpenses(group, request);
 
@@ -190,6 +196,8 @@ public class ExpensesFacadeImpl implements ExpenseFacade
             checkGroupMembers(group, member);
 
             Expenses expense = checkExpense(group, expenseId);
+
+            validateSplitRequest(request);
 
             return expensesService.editExpense(expense, request);
 
@@ -332,6 +340,76 @@ public class ExpensesFacadeImpl implements ExpenseFacade
         return expense;
 
     }
+
+
+    private void validateSplitRequest(ExpensesRequest request)
+    {
+
+        if (request == null || request.getSplitMembers() == null || request.getSplitMembers().isEmpty())
+        {
+            throw new BadRequestException("At least one split member is required");
+        }
+
+        if (request.getSplitType() == null)
+        {
+            throw new BadRequestException("Split type is required");
+        }
+
+        Set<UUID> memberIds = new HashSet<>();
+        BigDecimal total = BigDecimal.ZERO;
+
+        for (SplitMemberRequest split : request.getSplitMembers())
+        {
+
+            if (!memberIds.add(split.getId()))
+            {
+                throw new BadRequestException("Duplicate split members are not allowed");
+            }
+
+            if (request.getSplitType() == SplitType.EQUAL)
+            {
+                if (split.getAmount() == null)
+                {
+                    throw new BadRequestException("Split amount is required");
+                }
+
+                if (split.getPercentage() != null)
+                {
+                    throw new BadRequestException("Percentage is not allowed for equal split");
+                }
+
+                total = total.add(split.getAmount());
+
+            } else if (request.getSplitType() == SplitType.PERCENTAGE)
+            {
+
+                if (split.getPercentage() == null)
+                {
+                    throw new BadRequestException("Percentage is required");
+                }
+
+                if (split.getAmount() != null)
+                {
+                    throw new BadRequestException("Amount is not allowed for percentage split");
+                }
+
+                total = total.add(split.getPercentage());
+            }
+        }
+
+        if (request.getSplitType() == SplitType.EQUAL && total.compareTo(request.getAmount()) != 0)
+        {
+
+            throw new BadRequestException("Split amounts must equal the expense amount. Difference: " + request.getAmount().subtract(total).abs());
+        }
+
+        if (request.getSplitType() == SplitType.PERCENTAGE && total.compareTo(new BigDecimal("100")) != 0) {
+
+            throw new BadRequestException("Total percentage must be exactly 100%");
+        }
+    }
+
+
 
 }
 
