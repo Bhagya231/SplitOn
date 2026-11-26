@@ -49,6 +49,17 @@ export default function SplitTable({members = [],amount = 0,splitType,manualPerc
      const totalShare = members.reduce( (total, member, index) => total + getShare(member, index),0 );
 
 
+     const totalAmountPaise = Math.round(Number(amount || 0) * 100);
+
+    const totalSplitPaise = members.reduce( (total, member) => total + Number(amounts[member.value] ?? 0), 0);
+
+    const differencePaise = totalAmountPaise - totalSplitPaise;
+
+    const isEqualSplitInvalid = splitType === "EQUAL" && totalAmountPaise > 0 &&  differencePaise !== 0;
+    
+   
+
+
     return (
         <div className="mt-4">
              {members.length > 0 && (
@@ -197,7 +208,8 @@ export default function SplitTable({members = [],amount = 0,splitType,manualPerc
                             )}
 
                             <td className="text-end text-nowrap">
-                                ₹{money(totalShare)}
+                                <span className={ !isEqualSplitInvalid  ? "text-success" : "text-danger" }>₹{money(totalShare )}</span>
+                                
                             </td>
                         </tr>
 
@@ -206,6 +218,15 @@ export default function SplitTable({members = [],amount = 0,splitType,manualPerc
                             
                 </table>  
             </div>
+
+            {splitType === "EQUAL" && differencePaise !== 0 && (
+                <div className="text-danger small mt-2">
+                    {differencePaise > 0  ? `₹${money(differencePaise / 100)} remaining to distribute.`  : `₹${money(Math.abs(differencePaise) / 100)} exceeds the expense amount.`
+                       
+                       
+                    }
+                </div>
+            )}
 
                 
 

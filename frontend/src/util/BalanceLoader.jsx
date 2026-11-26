@@ -7,15 +7,17 @@ export async function BalanceLoader({ params })
 
   try {
     
-      const [balanceResponse, totalResponse] = await Promise.all([
-          
+      const [balanceResponse,summary] = await Promise.all([
             api.get(`/groups/${groupId}/expenses/balance`),
-            api.get(`/groups/${groupId}/expenses/total`)
+            api.get(`/groups/${groupId}/balance`)
+
     ]);
+
+    console.log(summary.data);
 
     return {
         balance: balanceResponse.data,
-        total: totalResponse.data
+        groupBalance: summary.data
     };
   } catch (error) {
     if (error.response) {

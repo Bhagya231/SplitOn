@@ -24,8 +24,6 @@ public class ExpensesResponse
 
     private UUID groupId;
     private String groupName;
-
     private SplitType splitType;
-
     private List<SplitMemberResponse> splitMembers;
 }

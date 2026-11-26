@@ -4,7 +4,7 @@ import Card from "../components/common/Card";
 import {formatCurrency} from "../util/formatCurrency";
 
 import BalanceChart from "../components/BalanceChart";
-import { ChevronRight } from "lucide-react"
+import { ChevronRight ,Wallet } from "lucide-react"
 
 
 import {  Home } from "lucide-react";
@@ -14,11 +14,24 @@ import {  Home } from "lucide-react";
 function BalancesPage() 
 {
 
-  const { balance, summary, groupName, total } = useLoaderData();
+  const { balance, groupBalance } = useLoaderData();
 
 
+   const { totalGroupExpenses = 0, totalExpenseInGroup = 0,totalGroupMembers = 0, totalGroupPaid = 0, myPaid = 0,  myShare = 0, myNetBalance = 0,
+              membersWhoWillGetBack = [],
+              membersWhoNeedToPay = [],
+              settledMembers = []
+            } = groupBalance || {};
+
+
+            const isReceiving = myNetBalance > 0;
+            const isOwing = myNetBalance < 0;
+
+        
+            
 
   const { groupId } = useParams();
+  
 
   return (
     <div className="container py-4">
@@ -67,17 +80,88 @@ function BalancesPage()
           <div className="row g-3">
             <div className="col-12 col-sm-8 col-md-6 col-lg-4">
               <Card>
-                <div className="bg-primary-subtle rounded-3 p-3">
+                <div className="bg-primary-subtle text-center rounded-3 p-3">
+                  {/* <Wallet size={14} /> */}
                   <h5 className="mb-3">Total Expenses</h5>
                   <h2 className="text-primary fw-bold mb-0">
-                    {formatCurrency(total)}
+                    {formatCurrency(totalGroupExpenses)}
+                  
+                  </h2>
+                </div>
+              </Card>
+            </div>
+
+            
+
+            
+            <div className="col-12 col-sm-8 col-md-6 col-lg-4">
+              <Card>
+                <div className="bg-primary-subtle text-center rounded-3 p-3">
+                  <h5 className="mb-3"> Members</h5>
+                  <h2 className="text-primary fw-bold mb-0">
+                      {totalGroupMembers}
                   </h2>
                 </div>
               </Card>
               
+              
             </div>
-          </div>
+            <div className="col-12 col-sm-8 col-md-6 col-lg-4">
+              <Card>
+                <div className="bg-primary-subtle text-center rounded-3 p-3">
+                  <h5 className="mb-3"> Expenses</h5>
+                  <h2 className="text-primary fw-bold mb-0">
+                    {totalExpenseInGroup}
+                  </h2>
+                </div>
+              </Card>
+              
+              
+            </div>           
+          
+
+            <div className="col-12 col-sm-8 col-md-6 col-lg-4">
+              <Card>
+                <div className="bg-primary-subtle text-center rounded-3 p-3">
+                  <h5 className="mb-3">Your Total Paid</h5>
+                  <h2 className="text-primary fw-bold mb-0">
+                    {formatCurrency(myPaid)}
+                  
+                  </h2>
+                </div>
+              </Card>
+            </div>
+
+            <div className="col-12 col-sm-8 col-md-6 col-lg-4">
+              <Card>
+                <div className="bg-primary-subtle text-center rounded-3 p-3">
+                  <h5 className="mb-3">Your Total Share</h5>
+                  <h2 className="text-primary fw-bold mb-0">
+                    {formatCurrency(myShare)}
+                  
+                  </h2>
+                </div>
+              </Card>
+            </div>
+            <div className="col-12 col-sm-8 col-md-6 col-lg-4">
+              <Card>
+                <div className="bg-primary-subtle text-center rounded-3 p-3">
+                  <h5 className="mb-3">Your Net Balance</h5>
+                  <h2 className="text-primary fw-bold mb-0 ">
+                    {formatCurrency(myNetBalance)}
+                  
+                  </h2>
+                </div>
+              </Card>
+            </div>
+            </div>
+
+          
         </Card>
+
+
+
+
 
 
 
@@ -140,7 +224,7 @@ function BalancesPage()
       <Card  title="Net Balance per Member">
         <div className="container-fluid">
       <div className="row">
-        <div className="col-12" style={{overflowX: "auto"}}>
+        <div className="col-12">
           <BalanceChart members= {balance} />
         </div>
       </div>

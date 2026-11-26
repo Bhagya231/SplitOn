@@ -403,7 +403,7 @@ export default function ExpenseForm({ members = [],expense = null,groupId,onCanc
 
         if (members.length === 0) return result;
 
-        const totalPaise = Math.round(Number(totalAmount || 0) * 100);   
+        const totalPaise = Number(totalAmount || 0) * 100;   
         const selectedIds = members.map(member => String(member.value));
 
         const manualIds = Object.keys(manualValues).filter(id => selectedIds.includes(id));

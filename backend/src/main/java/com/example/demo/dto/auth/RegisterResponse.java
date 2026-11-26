@@ -17,10 +17,7 @@ public class RegisterResponse
     private String email;
     private String role;
     private String phone;
-
     private String token;
-
     private LocalDateTime createdAt;
-
     private LocalDateTime updatedAt;
 }

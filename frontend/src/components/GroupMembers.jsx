@@ -76,8 +76,8 @@ export default function GroupMembers({members = [],  onAddMember, onRemoveMember
             <div className="row g-3 d-none d-md-flex">
                 {members.map((member) => {
                     const memberId = member.memberId;
-                    // const balance = Number(member.balance || 0);
-                    const balance = Number(member.totalShare || 0);
+                    const balance = Number(member.balance || 0);
+                    const share = Number(member.totalShare || 0);
                     const name = member.memberName || "Unknown Member";
 
                     
@@ -126,15 +126,26 @@ export default function GroupMembers({members = [],  onAddMember, onRemoveMember
                                         {member.email || ""}
                                     </small>
 
-                                    <hr className="my-2" />
+                                    
 
                                     <p className="small mb-2">
                                         Paid: <strong>{formatAmount(member.paidAmount)}</strong>
                                     </p>
 
-                                    <p className="small mb-0">
+                                    <hr className="my-2" />
+
+                                    <p className="small mb-1 text-start ">
                                         Share:{" "}
-                                        <span className={`badge rounded-pill ${balance >= 0  ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger" }`}>
+                                        <span className={`badge rounded-pill ${share >= 0  ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger" }`}>
+                                               
+                                            {share > 0 ? `${formatAmount(share)}` : share === 0 ? `${formatAmount(share)}` :  `-${formatAmount(Math.abs(share))}` }
+                                            
+                                        </span>
+                                    </p>
+
+                                    <p className="small mb-0 text-start">
+                                        Net Balance:{" "}
+                                        <span className={`badge rounded-pill text-end ${balance >= 0  ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger" }`}>
                                                
                                             {balance > 0 ? `${formatAmount(balance)}` : balance === 0 ? `${formatAmount(balance)}` :  `-${formatAmount(Math.abs(balance))}` }
                                             

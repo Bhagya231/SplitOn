@@ -52,17 +52,31 @@ public interface GroupMembersRepository extends JpaRepository<GroupMembers, UUID
     @Query(value = """
     SELECT gm.*
     FROM group_members gm
-    WHERE gm.expense_groups_id = :groupId
-    AND gm.is_deleted = false
+        INNER JOIN members m ON m.id = gm.member_id
+            WHERE gm.expense_groups_id = :groupId
+                  AND gm.is_deleted = false
+                    AND m.is_Deleted = false
     """, nativeQuery = true)
     List<GroupMembers> findActiveGroupMembers(@Param("groupId") String groupId);
+
 
     @Query(value = """
     SELECT gm.*
     FROM group_members gm
-    WHERE gm.member_id = :memberId
-      AND gm.expense_groups_id = :groupId
-      AND gm.is_deleted = false
+        INNER JOIN members m ON m.id = gm.member_id
+            WHERE gm.expense_groups_id = :groupId
+                  AND gm.is_deleted = false
+    """, nativeQuery = true)
+    List<GroupMembers> findAllGroupMembers(@Param("groupId") String groupId);
+
+    @Query(value = """
+    SELECT gm.*
+    FROM group_members gm
+        INNER JOIN members m ON m.id = gm.member_id
+            WHERE gm.member_id = :memberId
+                AND gm.expense_groups_id = :groupId
+                AND gm.is_deleted = false
+                AND m.is_deleted = false
     """, nativeQuery = true)
     Optional<GroupMembers> findActiveMembers(@Param("memberId") String memberId, @Param("groupId") String groupId);
 

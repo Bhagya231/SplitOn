@@ -1,12 +1,23 @@
 package com.example.demo.facade.impl;
 
+import com.example.demo.dto.MemberDetailsResponse;
 import com.example.demo.dto.MemberRequest;
 import com.example.demo.dto.MemberResponse;
+import com.example.demo.entity.GroupMembers;
+import com.example.demo.entity.Groups;
+import com.example.demo.entity.Members;
+import com.example.demo.exceptions.BadRequestException;
 import com.example.demo.facade.api.MembersFacade;
+import com.example.demo.repository.GroupMembersRepository;
+import com.example.demo.repository.GroupsRepository;
+import com.example.demo.repository.MembersRepository;
+import com.example.demo.security.CustomUserDetails;
 import com.example.demo.service.api.MemberService;
 import com.example.demo.util.AppLogger;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -19,6 +30,9 @@ public class MembersFacadeImpl implements MembersFacade
     private static final Logger log = AppLogger.getLogger(MembersFacadeImpl.class);
 
     private final MemberService memberService;
+    private final MembersRepository membersRepository;
+    private final GroupsRepository groupsRepository;
+    private final GroupMembersRepository groupMembersRepository;
 
     @Override
     public MemberResponse addMembers(MemberRequest request)
@@ -68,4 +82,85 @@ public class MembersFacadeImpl implements MembersFacade
             memberService.deleteMember(id);
 
     }
+
+
+    @Override
+    public Members getLoggedInMember()
+    {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+
+        UUID memberId = userDetails.getUserId();
+
+        return membersRepository.getMemberById(memberId.toString())
+                .orElseThrow(() -> {
+                    log.warn("Member not found: {}", memberId);
+                    return new BadRequestException("Member not found");
+                });
+    }
+
+
+    @Override
+    public Groups validateGroup(UUID groupId)
+    {
+        if(groupId == null)
+        {
+            log.warn("group id is required {} ", groupId);
+            throw new BadRequestException("Group ID is required");
+        }
+
+        return groupsRepository.findActiveGroupById(groupId.toString())
+                .orElseThrow(() -> {
+                    log.warn("Group not found: {}", groupId);
+                    return new BadRequestException("Group not found");
+                });
+    }
+
+
+    private GroupMembers validateGroupMember(UUID memberId, UUID groupId)
+    {
+
+        if (memberId == null)
+        {
+            log.warn("Member id is required {}",memberId);
+            throw new BadRequestException("Member ID is required");
+        }
+
+        return groupMembersRepository.findActiveMembers(memberId.toString(),groupId.toString())
+                    .orElseThrow(() -> {
+                        log.warn("Member {} is not part of group {}", memberId, groupId);
+                        return new BadRequestException("Member is not part of this group");
+                    });
+    }
+
+
+//    @Override
+//    public MemberDetailsResponse getMemberDetails(UUID groupId, UUID memberId)
+//    {
+//
+//        try {
+//
+//            Members loggedInMember = getLoggedInMember();
+//            Groups group = validateGroup(groupId);
+//            GroupMembers loggedInMembers = validateGroupMember(loggedInMember.getId(), groupId);
+//            GroupMembers selectedMember = validateGroupMember(memberId, groupId);
+//            log.info("Fetching member details for member {} in group {}", memberId, groupId);
+//            return memberService.getMemberDetails(group,loggedInMembers,selectedMember);
+//
+//
+//        } catch (BadRequestException e)
+//        {
+//            log.warn("Member details request failed: {}", e.getMessage());
+//            throw e;
+//
+//        } catch (Exception e)
+//        {
+//            log.error("Unexpected error while fetching member details", e);
+//            throw new BadRequestException("Unable to fetch member details");
+//        }
+//    }
+
+
 }
