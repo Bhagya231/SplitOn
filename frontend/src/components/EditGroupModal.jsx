@@ -77,11 +77,7 @@ export default function EditGroupModal({show,group, onClose, onUpdate, loading =
                         value={name}
                         onChange={e => {
                             setName(e.target.value);
-                            setErrors(prev => ({
-                                ...prev,
-                                name: ""
-                            }));
-                        }}
+                            setErrors(prev => ({...prev, name: "" })); }}
                         placeholder="Enter group name"
                         error={errors.name}
                         required
@@ -94,11 +90,7 @@ export default function EditGroupModal({show,group, onClose, onUpdate, loading =
                         value={description}
                         onChange={e => {
                             setDescription(e.target.value);
-                            setErrors(prev => ({
-                                ...prev,
-                                description: ""
-                            }));
-                        }}
+                            setErrors(prev => ({ ...prev,description: "" })); }}
                         placeholder="Enter group description"
                         rows={3}
                         error={errors.description}
@@ -107,21 +99,11 @@ export default function EditGroupModal({show,group, onClose, onUpdate, loading =
                 </Modal.Body>
 
                 <Modal.Footer>
-                    <button
-                        type="button"
-                        className="btn btn-light px-4"
-                        onClick={handleClose}
-                        disabled={loading}
-                    >
+                    <button type="button" className="btn btn-light px-4" onClick={handleClose}  disabled={loading}  >
                         Cancel
                     </button>
 
-                    <button
-                        type="submit"
-                        className="btn text-white px-4"
-                        style={{ backgroundColor: "#244B9B" }}
-                        disabled={loading}
-                    >
+                    <button type="submit" className="btn text-white px-4" style={{ backgroundColor: "#244B9B" }}disabled={loading}  >
                         {loading ? (
                             <>
                                 <span className="spinner-border spinner-border-sm me-2" />

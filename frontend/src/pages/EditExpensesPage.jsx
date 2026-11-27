@@ -9,7 +9,8 @@ export default function EditExpensePage({ onExpenseSaved }) {
 
   const { expense, members, groupId } = useLoaderData();
 
-  if (!expense) {
+  if (!expense) 
+    {
     return (
       <div className="container py-5">
         <div className="alert alert-warning">

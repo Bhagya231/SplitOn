@@ -13,11 +13,7 @@ function DeleteConfirm({show, title = "Confirm delete ", itemName,message,onCanc
     
 
     return (
-        <Modal
-            show={show}
-            onHide={loading ? undefined : onCancel}
-            centered
-            backdrop={loading ? 'static' : true}
+        <Modal show={show} onHide={loading ? undefined : onCancel} centered backdrop={loading ? 'static' : true}
             keyboard={!loading}
             aria-labelledby="delete-modal-title">
 
@@ -29,10 +25,7 @@ function DeleteConfirm({show, title = "Confirm delete ", itemName,message,onCanc
 
             <Modal.Body className="text-center px-4 py-4">
                 <div className="mb-3">
-                    <AlertTriangle
-                        size={48}
-                        className="text-danger"
-                    />
+                    <AlertTriangle  size={48} className="text-danger"  />
                 </div>
 
                 <h6 className="fw-semibold mb-2">

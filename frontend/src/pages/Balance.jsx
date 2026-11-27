@@ -4,19 +4,23 @@ import Card from "../components/common/Card";
 import {formatCurrency} from "../util/formatCurrency";
 
 import BalanceChart from "../components/BalanceChart";
-import { ChevronRight ,Wallet , TrendingUp, TrendingDown,CheckCircle } from "lucide-react"
+import { ChevronRight  , TrendingUp, TrendingDown,CheckCircle } from "lucide-react"
 
 import MemberBalanceCard from "../components/MemberBalanceCard"
 
+import { useState } from "react";
+import api from "../util/Api";
+import MemberBalanceModal from "../components/MemberBalanceModal";
 
 import {  Home } from "lucide-react";
 
 
 
-function BalancesPage() 
+function BalancesPage()
 {
 
   const { balance, groupBalance } = useLoaderData();
+
 
 
    const { totalGroupExpenses = 0, totalExpenseInGroup = 0,totalGroupMembers = 0, totalGroupPaid = 0, myPaid = 0,  myShare = 0, myNetBalance = 0,
@@ -25,16 +29,45 @@ function BalancesPage()
               settledMembers = []
             } = groupBalance || {};
 
+    const [selectedMember, setSelectedMember] = useState(null);
+    const [showMemberModal, setShowMemberModal] = useState(false);
+    const [loadingMember, setLoadingMember] = useState(false);
+    const [memberError, setMemberError] = useState("");
+
 
             const isReceiving = myNetBalance > 0;
             const isOwing = myNetBalance < 0;
 
         // const isReceiving = 0;
         //      const isOwing = -5;
-            
+
 
   const { groupId } = useParams();
-  
+
+
+
+  async function handleMemberClick(memberId)
+  {
+      try {
+          setLoadingMember(true);
+          setMemberError("");
+          setSelectedMember(null);
+
+          const response = await api.get( `/groups/${groupId}/balance/${memberId}`);
+
+          setSelectedMember(response.data);
+          setShowMemberModal(true);
+
+      } catch (error) {
+          setMemberError(error.response?.data?.message || "Failed to load member balance details." );
+
+      } finally {
+          setLoadingMember(false);
+      }
+  }
+
+
+
 
   return (
     <div className="container py-4">
@@ -56,7 +89,7 @@ function BalancesPage()
 
               <li className="breadcrumb-item ">
                   <Link to={`/app/groups/${groupId}`} className="text-decoration-none breadcrumb-link" >
-                      GroupDetails 
+                      GroupDetails
                   </Link>
               </li>
 
@@ -79,86 +112,88 @@ function BalancesPage()
       </nav>
 
 
-        <Card title="Total Summary">
+        <Card title="Total Summary" className="">
           <div className="row g-3">
             <div className="col-12 col-sm-8 col-md-6 col-lg-4">
-              <Card>
+
                 <div className="bg-primary-subtle text-center rounded-3 p-3">
                   {/* <Wallet size={14} /> */}
-                  <h5 className="mb-3">Total Expenses</h5>
+                  <h5 className="mb-1">Total Expenses</h5>
                   <h2 className="text-primary fw-bold mb-0">
                     {formatCurrency(totalGroupExpenses)}
-                  
+
                   </h2>
                 </div>
-              </Card>
+
             </div>
 
-          
-            
+
+
+
+
+
             <div className="col-12 col-sm-8 col-md-6 col-lg-4">
-              <Card>
+
                 <div className="bg-primary-subtle text-center rounded-3 p-3">
-                  <h5 className="mb-3"> Members</h5>
+                  <h5 className="mb-1">Your Total Paid</h5>
+                  <h2 className="text-primary fw-bold mb-0">
+                    {formatCurrency(myPaid)}
+
+                  </h2>
+                </div>
+
+            </div>
+
+            <div className="col-12 col-sm-8 col-md-6 col-lg-4">
+
+                <div className="bg-primary-subtle text-center rounded-3 p-3">
+                  <h5 className="mb-1">Your Total Share</h5>
+                  <h2 className="text-primary fw-bold mb-0">
+                    {formatCurrency(myShare)}
+
+                  </h2>
+                </div>
+
+            </div>
+
+             <div className="col-12 col-sm-8 col-md-6 col-lg-4">
+
+                <div className="bg-primary-subtle text-center rounded-3 p-3">
+                  <h5 className="mb-1"> Members</h5>
                   <h2 className="text-primary fw-bold mb-0">
                       {totalGroupMembers}
                   </h2>
                 </div>
-              </Card>
-              
-              
+
+
+
             </div>
             <div className="col-12 col-sm-8 col-md-6 col-lg-4">
-              <Card>
+
                 <div className="bg-primary-subtle text-center rounded-3 p-3">
-                  <h5 className="mb-3"> Expenses</h5>
+                  <h5 className="mb-1"> Expenses</h5>
                   <h2 className="text-primary fw-bold mb-0">
                     {totalExpenseInGroup}
                   </h2>
                 </div>
-              </Card>
-              
-              
-            </div>           
-          
 
-            <div className="col-12 col-sm-8 col-md-6 col-lg-4">
-              <Card>
-                <div className="bg-primary-subtle text-center rounded-3 p-3">
-                  <h5 className="mb-3">Your Total Paid</h5>
-                  <h2 className="text-primary fw-bold mb-0">
-                    {formatCurrency(myPaid)}
-                  
-                  </h2>
-                </div>
-              </Card>
-            </div>
 
-            <div className="col-12 col-sm-8 col-md-6 col-lg-4">
-              <Card>
-                <div className="bg-primary-subtle text-center rounded-3 p-3">
-                  <h5 className="mb-3">Your Total Share</h5>
-                  <h2 className="text-primary fw-bold mb-0">
-                    {formatCurrency(myShare)}
-                  
-                  </h2>
-                </div>
-              </Card>
+
             </div>
             {/* <div className="col-12 col-sm-8 col-md-6 col-lg-4">
-              <Card>
+
                 <div className="bg-primary-subtle text-center rounded-3 p-3">
                   <h5 className="mb-3">Your Net Balance</h5>
                   <h2 className="text-primary fw-bold mb-0 ">
                     {formatCurrency(myNetBalance)}
-                  
+
                   </h2>
                 </div>
-              </Card>
+
             </div> */}
             </div>
 
-          
+
         </Card>
 
 
@@ -206,6 +241,20 @@ function BalancesPage()
         </section>
 
 
+        {loadingMember && (
+            <div className="text-center py-3">
+                <div className="spinner-border spinner-border-sm text-primary me-2" />
+                Loading member details...
+            </div>
+        )}
+
+        {memberError && (
+            <div className="alert alert-danger">
+                {memberError}
+            </div>
+        )}
+
+
 
          <section className="mb-4">
             <div className="row g-3">
@@ -214,7 +263,8 @@ function BalancesPage()
                 <MemberBalanceCard
                   members={membersWhoWillGetBack}
                   type="receive"
-                  
+                  onMemberClick={handleMemberClick}
+
                 />
               </div>
 
@@ -222,6 +272,7 @@ function BalancesPage()
                 <MemberBalanceCard
                   members={membersWhoNeedToPay}
                   type="pay"
+                  onMemberClick={handleMemberClick}
                 />
               </div>
 
@@ -239,13 +290,13 @@ function BalancesPage()
 
               <span className="text-secondary small">
                 {settledMembers.length === 0  ? "None at the moment" : `${settledMembers.length} members settled`}
-       
+
               </span>
             </div>
           </div>
         </section>
 
-                    
+
 
 
 
@@ -291,7 +342,7 @@ function BalancesPage()
                         <span
                             className={`badge rounded-pill px-3 py-2 ${member.balance > 0 ? "bg-success-subtle text-success"
                                   : member.balance < 0 ? "bg-danger-subtle text-danger" : "bg-secondary-subtle text-secondary" }`}>
-                            {member.balance > 0  ? "Should Receive"  : member.balance < 0 ? "Needs to Pay"  : "Settled" }      
+                            {member.balance > 0  ? "Should Receive"  : member.balance < 0 ? "Needs to Pay"  : "Settled" }
                         </span>
                     </td>
                     </tr>
@@ -312,6 +363,15 @@ function BalancesPage()
       </div>
     </div>
       </Card>
+
+      <MemberBalanceModal
+        show={showMemberModal}
+        member={selectedMember}
+        onClose={() => {
+            setShowMemberModal(false);
+            setSelectedMember(null);
+        }}
+      />
     </div>
   );
 }

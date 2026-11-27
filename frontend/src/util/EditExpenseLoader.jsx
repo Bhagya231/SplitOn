@@ -19,6 +19,6 @@ export async function EditExpenseLoader({ params })
 
     } catch (error) {
         console.error("Failed to fetch edit expense data:", error);
-        throw error;
+        throw new Error( error.response?.data?.message || "Failed to load expenses. Please try again." || { status: error.response.status || 500 } );
     }
 }

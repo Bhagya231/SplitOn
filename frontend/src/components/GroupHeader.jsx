@@ -9,16 +9,6 @@ import Food from "../assets/food.png"
 
 
 
-
-// const groupVisuals = [
-//     { keywords: ["goa", "trip", "travel", "vacation"], image: travelImage },
-//     { keywords: ["food", "dinner", "lunch"], image: foodImage },
-//     { keywords: ["shopping", "shop"], image: shoppingImage },
-//     { keywords: ["movie", "entertainment"], image: movieImage },
-//     { keywords: ["home", "family", "flat"], image: homeImage },
-//     { keywords: ["office", "work", "project", "college"], image: workImage }
-// ];
-
 export default function GroupHeader({ group, onEdit, onDelete })
 {
 

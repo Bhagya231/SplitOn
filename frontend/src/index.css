@@ -11,13 +11,5 @@ body {
 }
 
 
-body {
-  background-image: url("./assets/bg.png");
-  background-size: cover;
-  background-position: center center;
-  background-repeat: no-repeat;
-  background-attachment: fixed; 
-  min-height: 100vh;
-  margin: 0;
-}
+
 

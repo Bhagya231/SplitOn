@@ -145,7 +145,7 @@ export default function GroupMembers({members = [],  onAddMember, onRemoveMember
 
                                     <p className="small mb-0 text-start">
                                         Net Balance:{" "}
-                                        <span className={`badge rounded-pill text-end ${balance >= 0  ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger" }`}>
+                                        <span className={`badge rounded-pill  ${balance >= 0  ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger" }`}>
                                                
                                             {balance > 0 ? `${formatAmount(balance)}` : balance === 0 ? `${formatAmount(balance)}` :  `-${formatAmount(Math.abs(balance))}` }
                                             

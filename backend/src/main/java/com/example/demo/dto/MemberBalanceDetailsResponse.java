@@ -12,21 +12,13 @@ import java.util.UUID;
 public class MemberBalanceDetailsResponse
 {
     private UUID memberId;
-
     private String memberName;
-
     private String email;
-
     private String phone;
-
     private BigDecimal totalPaid;
-
     private BigDecimal totalShare;
-
     private BigDecimal netBalance;
-
     private String balanceStatus;
-
     private List<BalanceRelationResponse> owesTo;
 
     private List<BalanceRelationResponse> owedBy;

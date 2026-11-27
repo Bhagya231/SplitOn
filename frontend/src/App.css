@@ -5,7 +5,7 @@ body {
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
-  background-attachment: fixed; 
+  background-attachment: fixed;
   min-height: 100vh;
   margin: 0;
 }
@@ -28,13 +28,13 @@ body {
 }
 
 .breadcrumb-link {
-  color: #6c757d; 
+  color: #6c757d;
   transition: color 0.2s ease, transform 0.2s ease;
 }
 
 .breadcrumb-link:hover {
-  color: var(--bs-primary) ; 
-  text-decoration: underline ; 
+  color: var(--bs-primary) ;
+  text-decoration: underline ;
 }
 
 
@@ -49,4 +49,9 @@ body {
 .no-spinner {
   -moz-appearance: textfield;
   appearance: textfield;
+}
+
+
+.bg-pink-200 {
+  background-color: #79dfc1 ;
 }

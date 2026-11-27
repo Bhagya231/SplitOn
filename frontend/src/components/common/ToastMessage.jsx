@@ -2,12 +2,8 @@
 import Toast from "react-bootstrap/Toast";
 import ToastContainer from "react-bootstrap/ToastContainer";
 
-export default function ToastMessage({
-    show,
-    message,
-    type = "success",
-    onClose
-}) {
+export default function ToastMessage({ show, message, type = "success", onClose})
+ {
     return (
         <ToastContainer position="bottom-end" className="p-3">
             <Toast
